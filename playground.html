@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tip Calculator</title>
+<style>
+  :root { --accent: #0d9488; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    background: #f8fafc;
+    color: #1e293b;
+    padding: 48px 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  h1 {
+    color: var(--accent);
+    text-align: center;
+    margin: 0 0 8px;
+    font-size: 1.6rem;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  input {
+    font: inherit;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  button {
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  button:hover { background: #0f766e; }
+  .results {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+  }
+  .results.show { display: flex; }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+  }
+  .row .value {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .error {
+    color: #dc2626;
+    font-size: 0.85rem;
+    text-align: center;
+    display: none;
+  }
+  .error.show { display: block; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>Tip Calculator</h1>
+
+    <label>
+      Bill (€)
+      <input type="number" id="bill" min="0" step="0.01" placeholder="0.00">
+    </label>
+
+    <label>
+      Tip percentage (%)
+      <input type="number" id="tip" min="0" step="0.1" placeholder="0">
+    </label>
+
+    <label>
+      Number of people
+      <input type="number" id="people" min="1" step="1" placeholder="1">
+    </label>
+
+    <button id="calc">Calculate</button>
+
+    <p class="error" id="error">Please enter a valid bill, tip, and at least 1 person.</p>
+
+    <section class="results" id="results">
+      <div class="row"><span>Tip</span><span class="value" id="tipOut">€0.00</span></div>
+      <div class="row"><span>Total</span><span class="value" id="totalOut">€0.00</span></div>
+      <div class="row"><span>Per person</span><span class="value" id="perPersonOut">€0.00</span></div>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function calculate() {
+      const bill = parseFloat($('bill').value);
+      const tipPct = parseFloat($('tip').value);
+      const people = parseInt($('people').value, 10);
+
+      const valid = Number.isFinite(bill) && bill >= 0
+        && Number.isFinite(tipPct) && tipPct >= 0
+        && Number.isInteger(people) && people >= 1;
+
+      if (!valid) {
+        $('error').classList.add('show');
+        $('results').classList.remove('show');
+        return;
+      }
+
+      $('error').classList.remove('show');
+
+      const tip = bill * tipPct / 100;
+      const total = bill + tip;
+      const perPerson = total / people;
+
+      const fmt = n => '€' + n.toFixed(2);
+      $('tipOut').textContent = fmt(tip);
+      $('totalOut').textContent = fmt(total);
+      $('perPersonOut').textContent = fmt(perPerson);
+      $('results').classList.add('show');
+    }
+
+    $('calc').addEventListener('click', calculate);
+  </script>
+</body>
+</html>
