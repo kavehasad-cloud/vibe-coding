@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Habit Tracker</title>
+<style>
+  :root {
+    --accent: #0d9488;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 2rem 1rem;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--accent);
+    text-align: center;
+    margin: 0 0 0.25rem;
+    font-size: 1.75rem;
+  }
+  #summary {
+    color: var(--accent);
+    text-align: center;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+  }
+  .add-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  #habit-input {
+    flex: 1;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+  #habit-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  }
+  button {
+    cursor: pointer;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+  }
+  #add-btn {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+  }
+  #add-btn:hover { background: #0f766e; }
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+  li input[type="checkbox"] {
+    width: 1.2rem;
+    height: 1.2rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .habit-name {
+    flex: 1;
+    word-break: break-word;
+  }
+  li.done .habit-name {
+    text-decoration: line-through;
+    color: #94a3b8;
+  }
+  .delete-btn {
+    background: transparent;
+    color: #ef4444;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  .delete-btn:hover { text-decoration: underline; }
+  .empty {
+    text-align: center;
+    color: #94a3b8;
+    padding: 1rem;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Daily Habit Tracker</h1>
+    <p id="summary">0 of 0 habits done today</p>
+
+    <div class="add-row">
+      <input id="habit-input" type="text" placeholder="Add a habit…" autocomplete="off">
+      <button id="add-btn">Add habit</button>
+    </div>
+
+    <ul id="habit-list"></ul>
+  </div>
+
+<script>
+  const habits = [];
+  let nextId = 1;
+
+  const input = document.getElementById('habit-input');
+  const addBtn = document.getElementById('add-btn');
+  const list = document.getElementById('habit-list');
+  const summary = document.getElementById('summary');
+
+  function addHabit() {
+    const name = input.value.trim();
+    if (!name) return;
+    habits.push({ id: nextId++, name, done: false });
+    input.value = '';
+    input.focus();
+    render();
+  }
+
+  function toggleHabit(id) {
+    const h = habits.find(h => h.id === id);
+    if (h) h.done = !h.done;
+    render();
+  }
+
+  function deleteHabit(id) {
+    const i = habits.findIndex(h => h.id === id);
+    if (i !== -1) habits.splice(i, 1);
+    render();
+  }
+
+  function render() {
+    list.innerHTML = '';
+
+    if (habits.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'empty';
+      empty.textContent = 'No habits yet — add one above to get started.';
+      list.appendChild(empty);
+    } else {
+      habits.forEach(h => {
+        const li = document.createElement('li');
+        if (h.done) li.classList.add('done');
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = h.done;
+        checkbox.addEventListener('change', () => toggleHabit(h.id));
+
+        const span = document.createElement('span');
+        span.className = 'habit-name';
+        span.textContent = h.name;
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.textContent = 'Delete';
+        del.addEventListener('click', () => deleteHabit(h.id));
+
+        li.append(checkbox, span, del);
+        list.appendChild(li);
+      });
+    }
+
+    const doneCount = habits.filter(h => h.done).length;
+    summary.textContent = `${doneCount} of ${habits.length} habits done today`;
+  }
+
+  addBtn.addEventListener('click', addHabit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') addHabit();
+  });
+
+  render();
+</script>
+</body>
+</html>
