@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Currency Converter</title>
+<style>
+  :root {
+    --accent: #0d9488;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 2rem 1rem;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--accent);
+    text-align: center;
+    margin: 0 0 1.5rem;
+    font-size: 1.75rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.35rem;
+  }
+  .field { margin-bottom: 1rem; }
+  input, select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    background: #fff;
+    color: #1e293b;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  }
+  .currency-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+  .currency-row .field { flex: 1; margin-bottom: 0; }
+  #swap-btn {
+    flex-shrink: 0;
+    background: #f1f5f9;
+    color: var(--accent);
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 0.6rem 0.7rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+  #swap-btn:hover { background: #e2e8f0; }
+  button {
+    cursor: pointer;
+    font-size: 1rem;
+    border: none;
+    border-radius: 6px;
+  }
+  #convert-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  #convert-btn:hover { background: #0f766e; }
+  #convert-btn:disabled {
+    background: #94a3b8;
+    cursor: default;
+  }
+  #result {
+    text-align: center;
+    margin-top: 1.5rem;
+    min-height: 1.5rem;
+  }
+  #result .amount {
+    color: var(--accent);
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+  #result .rate {
+    color: #475569;
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
+  }
+  #result .note {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+  #result .timestamp {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+  #result .status { color: #64748b; }
+  #result .error {
+    color: #dc2626;
+    font-size: 0.95rem;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Currency Converter</h1>
+
+    <div class="field">
+      <label for="amount">Amount</label>
+      <input id="amount" type="number" value="1" min="0" step="any" inputmode="decimal">
+    </div>
+
+    <div class="currency-row">
+      <div class="field">
+        <label for="from">From</label>
+        <select id="from"></select>
+      </div>
+      <button id="swap-btn" title="Swap currencies" aria-label="Swap currencies">⇄</button>
+      <div class="field">
+        <label for="to">To</label>
+        <select id="to"></select>
+      </div>
+    </div>
+
+    <button id="convert-btn">Convert</button>
+
+    <div id="result"></div>
+  </div>
+
+<script>
+  // Common currencies the dropdowns offer. Note: IRR (Iranian Rial) is included
+  // by request, but the Frankfurter API is built on ECB reference rates, which
+  // don't cover IRR — picking it produces a handled "not available" message.
+  const CURRENCIES = ['EUR', 'USD', 'IRR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'CNY'];
+
+  const amountEl = document.getElementById('amount');
+  const fromEl = document.getElementById('from');
+  const toEl = document.getElementById('to');
+  const swapBtn = document.getElementById('swap-btn');
+  const convertBtn = document.getElementById('convert-btn');
+  const result = document.getElementById('result');
+
+  // Populate both dropdowns with the same currency list.
+  for (const code of CURRENCIES) {
+    fromEl.add(new Option(code, code));
+    toEl.add(new Option(code, code));
+  }
+  fromEl.value = 'EUR';
+  toEl.value = 'USD';
+
+  function showStatus(text) {
+    result.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'status';
+    p.textContent = text;
+    result.appendChild(p);
+  }
+
+  function showError(text) {
+    result.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'error';
+    p.textContent = text;
+    result.appendChild(p);
+  }
+
+  function showResult(amount, from, to, converted, rate) {
+    result.innerHTML = '';
+
+    const amountLine = document.createElement('div');
+    amountLine.className = 'amount';
+    amountLine.textContent = `${amount} ${from} = ${converted.toFixed(2)} ${to}`;
+
+    const rateLine = document.createElement('div');
+    rateLine.className = 'rate';
+    rateLine.textContent = `1 ${from} = ${rate} ${to}`;
+
+    const noteLine = document.createElement('div');
+    noteLine.className = 'note';
+    noteLine.textContent = 'Official ECB daily reference rates, updated each business day.';
+
+    // Local date and time of this conversion, formatted for the user's locale.
+    const timeLine = document.createElement('div');
+    timeLine.className = 'timestamp';
+    timeLine.textContent = `Converted ${new Date().toLocaleString()}`;
+
+    result.append(amountLine, rateLine, noteLine, timeLine);
+  }
+
+  async function convert() {
+    const amount = parseFloat(amountEl.value);
+    const from = fromEl.value;
+    const to = toEl.value;
+
+    if (isNaN(amount) || amount < 0) {
+      showError('Please enter a valid amount.');
+      return;
+    }
+
+    // Same currency on both sides — no API call needed.
+    if (from === to) {
+      showResult(amount, from, to, amount, '1.00');
+      return;
+    }
+
+    convertBtn.disabled = true;
+    showStatus('Converting…');
+
+    try {
+      const url = `https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`;
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        // Frankfurter returns an error status for unsupported currencies (e.g. IRR).
+        throw new Error('unsupported');
+      }
+
+      const data = await res.json();
+      const rate = data.rates && data.rates[to];
+
+      if (typeof rate !== 'number') {
+        throw new Error('unsupported');
+      }
+
+      const converted = amount * rate;
+      // Show the per-unit rate at sensible precision (small rates like JPY→EUR
+      // need more decimals to be meaningful).
+      const rateStr = rate >= 1 ? rate.toFixed(4) : rate.toPrecision(4);
+      showResult(amount, from, to, converted, rateStr);
+    } catch (err) {
+      if (err.message === 'unsupported') {
+        showError(`Sorry, rates for ${from} → ${to} aren't available (ECB doesn't publish one of these currencies).`);
+      } else {
+        showError('Could not fetch exchange rates. Please check your connection and try again.');
+      }
+    } finally {
+      convertBtn.disabled = false;
+    }
+  }
+
+  function swap() {
+    const tmp = fromEl.value;
+    fromEl.value = toEl.value;
+    toEl.value = tmp;
+  }
+
+  convertBtn.addEventListener('click', convert);
+  swapBtn.addEventListener('click', swap);
+  amountEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter') convert();
+  });
+</script>
+</body>
+</html>
