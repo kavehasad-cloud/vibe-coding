@@ -121,8 +121,28 @@
   </div>
 
 <script>
-  const habits = [];
-  let nextId = 1;
+  const STORAGE_KEY = 'habits';
+
+  // Load any saved habits from localStorage. If nothing is saved (or it's
+  // unreadable), start with an empty list — same as a fresh first visit.
+  function load() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+  }
+
+  const habits = load();
+  // Make sure new ids never collide with ids that were restored.
+  let nextId = habits.reduce((max, h) => Math.max(max, h.id), 0) + 1;
 
   const input = document.getElementById('habit-input');
   const addBtn = document.getElementById('add-btn');
@@ -184,6 +204,9 @@
 
     const doneCount = habits.filter(h => h.done).length;
     summary.textContent = `${doneCount} of ${habits.length} habits done today`;
+
+    // Persist the current list so it survives a page reload.
+    save();
   }
 
   addBtn.addEventListener('click', addHabit);
