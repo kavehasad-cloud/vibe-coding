@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guestbook</title>
+<style>
+  :root {
+    --accent: #0d9488;
+    --accent-dark: #0f766e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 2.5rem 1rem;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  h1 {
+    color: var(--accent);
+    text-align: center;
+    margin: 0 0 0.4rem;
+    font-size: 1.9rem;
+  }
+  .subtitle {
+    text-align: center;
+    color: #64748b;
+    margin: 0 0 2rem;
+    font-size: 0.98rem;
+  }
+  form {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 0.35rem;
+  }
+  .field { margin-bottom: 1rem; }
+  input, textarea {
+    width: 100%;
+    font: inherit;
+    color: #1e293b;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  button {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-dark); }
+  button:disabled { background: #94a3b8; cursor: default; }
+  .form-note {
+    min-height: 1.2em;
+    margin: 0.6rem 0 0;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  .form-note.error { color: #dc2626; }
+  .form-note.status { color: #64748b; }
+  #entries {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.85rem;
+  }
+  .entry {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+  }
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+  }
+  .entry-name {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .entry-time {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+  .entry-message {
+    color: #334155;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .empty {
+    text-align: center;
+    color: #94a3b8;
+    padding: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Guestbook</h1>
+    <p class="subtitle">Leave a note — everyone who visits can see it.</p>
+
+    <form id="guestbook-form">
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" placeholder="Your name" maxlength="80">
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" placeholder="Say hello…" maxlength="500"></textarea>
+      </div>
+      <button type="submit" id="submit-btn">Sign the guestbook</button>
+      <p class="form-note" id="form-note"></p>
+    </form>
+
+    <ul id="entries"></ul>
+  </div>
+
+<script type="module">
+  import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+  const SUPABASE_URL = 'https://xhtcqsnzipwkjieyjjov.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_RruLnZmJBcnc7wHlOdzmSA_XpN4OcMc';
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const form = document.getElementById('guestbook-form');
+  const nameEl = document.getElementById('name');
+  const messageEl = document.getElementById('message');
+  const submitBtn = document.getElementById('submit-btn');
+  const note = document.getElementById('form-note');
+  const entries = document.getElementById('entries');
+
+  function setNote(text, kind) {
+    note.textContent = text || '';
+    note.className = 'form-note' + (kind ? ' ' + kind : '');
+  }
+
+  // Format an ISO timestamp into a friendly, locale-aware string.
+  function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    });
+  }
+
+  // Render-from-data: the list is always rebuilt from what's in the database.
+  function render(rows) {
+    entries.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'No messages yet — be the first to sign!';
+      entries.appendChild(li);
+      return;
+    }
+
+    for (const row of rows) {
+      const li = document.createElement('li');
+      li.className = 'entry';
+
+      const head = document.createElement('div');
+      head.className = 'entry-head';
+
+      const name = document.createElement('span');
+      name.className = 'entry-name';
+      name.textContent = row.name;
+
+      const time = document.createElement('span');
+      time.className = 'entry-time';
+      time.textContent = formatTime(row.created_at);
+
+      head.append(name, time);
+
+      const msg = document.createElement('div');
+      msg.className = 'entry-message';
+      msg.textContent = row.message;
+
+      li.append(head, msg);
+      entries.appendChild(li);
+    }
+  }
+
+  // Fetch all rows, newest first, and render them.
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      entries.innerHTML = '';
+      const li = document.createElement('li');
+      li.className = 'empty';
+      li.textContent = 'Could not load messages. Please refresh to try again.';
+      entries.appendChild(li);
+      return;
+    }
+
+    render(data);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = nameEl.value.trim();
+    const message = messageEl.value.trim();
+
+    if (!name || !message) {
+      setNote('Please fill in both your name and a message.', 'error');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    setNote('Sending…', 'status');
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({ name, message });
+
+    if (error) {
+      setNote('Sorry, something went wrong. Please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    // Success: clear the form and rebuild the list from the database.
+    form.reset();
+    setNote('', '');
+    await loadMessages();
+    submitBtn.disabled = false;
+  });
+
+  loadMessages();
+</script>
+</body>
+</html>
