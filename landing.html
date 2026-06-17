@@ -351,20 +351,58 @@
       });
     });
 
-    // Contact form: no real submission — just a friendly confirmation.
+    // Contact form: submits to Web3Forms so messages reach our inbox, without
+    // navigating away from the page.
+    var WEB3FORMS_KEY = '91740978-5b8a-47a8-a3e1-56b88232409b';
     var form = document.getElementById('contact-form');
     var note = document.getElementById('form-note');
+    var submitBtn = form.querySelector('button[type="submit"]');
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var name = document.getElementById('name').value.trim();
-      if (!name || !document.getElementById('email').value.trim() || !document.getElementById('message').value.trim()) {
+      var email = document.getElementById('email').value.trim();
+      var message = document.getElementById('message').value.trim();
+      if (!name || !email || !message) {
         note.style.color = '#c0392b';
         note.textContent = 'Please fill in all three fields.';
         return;
       }
-      note.style.color = 'var(--accent)';
-      note.textContent = 'Thanks, ' + name + '! We\'ll be in touch shortly.';
-      form.reset();
+
+      // Sending state — disable the button so it can't be double-submitted.
+      submitBtn.disabled = true;
+      note.style.color = 'var(--muted)';
+      note.textContent = 'Sending…';
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          name: name,
+          email: email,
+          message: message
+        })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+          if (data.success) {
+            note.style.color = 'var(--accent)';
+            note.textContent = 'Thanks, ' + name + '! We\'ll be in touch shortly.';
+            form.reset();
+          } else {
+            throw new Error(data.message || 'Submission failed');
+          }
+        })
+        .catch(function () {
+          note.style.color = '#c0392b';
+          note.textContent = 'Sorry, something went wrong. Please try again or email us directly.';
+        })
+        .finally(function () {
+          submitBtn.disabled = false;
+        });
     });
   </script>
 
