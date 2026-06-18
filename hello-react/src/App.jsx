@@ -1,65 +1,44 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { cards } from './cards'
+import Flashcard from './Flashcard'
 import './App.css'
 
 function App() {
-  // array of { id, text, done } — load saved tasks once on startup
-  const [tasks, setTasks] = useState(() => {
-    const saved = localStorage.getItem('tasks')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [text, setText] = useState('') // current input value
+  // which card we're on — an index into the `cards` array
+  const [index, setIndex] = useState(0)
 
-  // save to localStorage whenever tasks change
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-  }, [tasks])
-
-  function addTask() {
-    if (text.trim() === '') return // ignore empty
-    setTasks([...tasks, { id: Date.now(), text: text, done: false }])
-    setText('') // clear the input
+  function next() {
+    if (index < cards.length - 1) setIndex(index + 1)
   }
 
-  function toggleTask(id) {
-    setTasks(tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)))
-  }
-
-  function deleteTask(id) {
-    setTasks(tasks.filter((t) => t.id !== id))
+  function prev() {
+    if (index > 0) setIndex(index - 1)
   }
 
   return (
     <section id="center">
-      <h1>My To-Do List</h1>
+      <h1>Flashcards</h1>
 
-      <div>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Add a task"
-        />
-        <button type="button" onClick={addTask}>
-          Add
+      <p className="progress">
+        Card {index + 1} of {cards.length}
+      </p>
+
+      {/* key={index} remounts the Flashcard when we move, so each new
+          card starts on its question side instead of staying flipped */}
+      <Flashcard key={index} card={cards[index]} />
+
+      <div className="nav">
+        <button type="button" onClick={prev} disabled={index === 0}>
+          Previous
+        </button>
+        <button
+          type="button"
+          onClick={next}
+          disabled={index === cards.length - 1}
+        >
+          Next
         </button>
       </div>
-
-      <ul>
-        {tasks.map((t) => (
-          <li key={t.id}>
-            <input
-              type="checkbox"
-              checked={t.done}
-              onChange={() => toggleTask(t.id)}
-            />
-            <span style={{ textDecoration: t.done ? 'line-through' : 'none' }}>
-              {t.text}
-            </span>
-            <button type="button" onClick={() => deleteTask(t.id)}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
     </section>
   )
 }
