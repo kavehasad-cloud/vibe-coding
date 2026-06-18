@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milan Pocket Guide</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Milan Pocket Guide 🇮🇹</h1>
+      <p class="intro">
+        A tiny guide to a few favourite places in Milan — somewhere to eat and
+        something to see. Pick a page to get started.
+      </p>
+    </header>
+
+    <nav>
+      <a href="index.html" class="current">Home</a>
+      <a href="eat.html">Eat</a>
+      <a href="see.html">See</a>
+    </nav>
+
+    <ul class="pages">
+      <li>
+        <a class="page-link" href="eat.html">
+          <span class="name">Eat</span>
+          <span class="desc" id="eat-count">Places to grab a bite.</span>
+        </a>
+      </li>
+      <li>
+        <a class="page-link" href="see.html">
+          <span class="name">See</span>
+          <span class="desc" id="see-count">Things worth seeing.</span>
+        </a>
+      </li>
+    </ul>
+
+    <footer>
+      A small Milan pocket guide · 2026
+    </footer>
+  </div>
+
+  <!-- Counts are pulled from the shared data file, not hardcoded. -->
+  <script src="data.js"></script>
+  <script>
+    document.getElementById("eat-count").textContent =
+      MILAN.eat.length + " places to grab a bite.";
+    document.getElementById("see-count").textContent =
+      MILAN.see.length + " things worth seeing.";
+  </script>
+</body>
+</html>

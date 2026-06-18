@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>See — Milan Pocket Guide</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>What to See 🏛️</h1>
+      <p class="intro">Landmarks and corners of the city worth setting aside time for.</p>
+    </header>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="eat.html">Eat</a>
+      <a href="see.html" class="current">See</a>
+    </nav>
+
+    <ul id="places" class="places"></ul>
+
+    <footer>
+      A small Milan pocket guide · 2026
+    </footer>
+  </div>
+
+  <!-- Render the list from the shared data file. -->
+  <script src="data.js"></script>
+  <script>
+    const list = document.getElementById("places");
+    MILAN.see.forEach(p => {
+      list.insertAdjacentHTML("beforeend",
+        `<li class="place"><span class="name">${p.name}</span>` +
+        `<span class="desc">${p.desc}</span></li>`);
+    });
+  </script>
+</body>
+</html>
