@@ -1,0 +1,14 @@
+# OS junk
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+
+# Secrets — never commit these
+.env
+*.env
+
+# Dependencies (arrives in Phase 3)
+node_modules/
