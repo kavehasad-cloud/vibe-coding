@@ -16,6 +16,21 @@
   letter-spacing: 0.5px;
 }
 
+/* running tally, e.g. "Known: 3 · Reviewing: 1" */
+.tally {
+  color: var(--text);
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+/* wraps the flip card + its rating buttons as one column */
+.card-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* the clickable card itself */
 .card {
   width: 100%;
@@ -62,6 +77,30 @@
   font-size: 12px;
   color: var(--text);
   opacity: 0.7;
+}
+
+/* "Got it" / "Review again" rating row — secondary styling so it reads
+   differently from the solid Previous / Next buttons */
+.mark {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.mark button {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--accent-border);
+  border-radius: 6px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.mark button:hover {
+  opacity: 0.8;
 }
 
 /* Previous / Next button row */
