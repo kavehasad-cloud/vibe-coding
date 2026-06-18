@@ -3,22 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Drink — Milan Pocket Guide</title>
+<title>Aperitivo — Milan Pocket Guide</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Where to Drink 🍸</h1>
-      <p class="intro">Aperitivo terraces and cocktail bars for that essential pre-dinner spritz.</p>
+      <h1>Aperitivo 🥂</h1>
+      <p class="intro">The Milanese ritual — one drink buys you a spread of snacks. These spots do the buffet right.</p>
     </header>
 
     <nav>
       <a href="index.html">Home</a>
       <a href="eat.html">Eat</a>
       <a href="see.html">See</a>
-      <a href="drink.html" class="current">Drink</a>
-      <a href="aperitivo.html">Aperitivo</a>
+      <a href="drink.html">Drink</a>
+      <a href="aperitivo.html" class="current">Aperitivo</a>
     </nav>
 
     <ul id="places" class="places"></ul>
@@ -32,7 +32,7 @@
   <script src="data.js"></script>
   <script>
     const list = document.getElementById("places");
-    MILAN.drink.forEach(p => {
+    MILAN.aperitivo.forEach(p => {
       list.insertAdjacentHTML("beforeend",
         `<li class="place"><span class="name">${p.name}</span>` +
         `<span class="desc">${p.desc}</span></li>`);

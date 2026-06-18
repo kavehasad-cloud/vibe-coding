@@ -12,7 +12,7 @@
       <h1>Milan Pocket Guide 🇮🇹</h1>
       <p class="intro">
         A tiny guide to a few favourite places in Milan — somewhere to eat,
-        something to see, and somewhere for a drink. Pick a page to get started.
+        something to see, a drink, and a proper aperitivo. Pick a page to get started.
       </p>
     </header>
 
@@ -21,6 +21,7 @@
       <a href="eat.html">Eat</a>
       <a href="see.html">See</a>
       <a href="drink.html">Drink</a>
+      <a href="aperitivo.html">Aperitivo</a>
     </nav>
 
     <ul class="pages">
@@ -42,6 +43,12 @@
           <span class="desc" id="drink-count">Spots for a drink.</span>
         </a>
       </li>
+      <li>
+        <a class="page-link" href="aperitivo.html">
+          <span class="name">Aperitivo</span>
+          <span class="desc" id="aperitivo-count">Spots for an aperitivo.</span>
+        </a>
+      </li>
     </ul>
 
     <footer>
@@ -58,6 +65,8 @@
       MILAN.see.length + " things worth seeing.";
     document.getElementById("drink-count").textContent =
       MILAN.drink.length + " spots for a drink.";
+    document.getElementById("aperitivo-count").textContent =
+      MILAN.aperitivo.length + " spots for an aperitivo.";
   </script>
 </body>
 </html>

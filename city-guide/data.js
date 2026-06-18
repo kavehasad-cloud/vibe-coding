@@ -1,5 +1,5 @@
 // The single source of truth for all place data in the Milan pocket guide.
-// eat.html, see.html and drink.html read from this object — no page hardcodes its own list.
+// eat.html, see.html, drink.html and aperitivo.html read from this object — no page hardcodes its own list.
 // Each place is just a name and a one-line description.
 const MILAN = {
   eat: [
@@ -23,7 +23,14 @@ const MILAN = {
     { name: "Camparino in Galleria", desc: "Historic Belle Époque bar for a classic Campari spritz by the Duomo." },
     { name: "Terrazza Aperol", desc: "Aperol's flagship terrace on Piazza del Duomo for a sunset spritz." },
     { name: "Mag Café", desc: "Navigli cocktail spot with vintage decor and inventive mixed drinks." },
-    { name: "Rita & Cocktails", desc: "Long-running Navigli favourite known for a generous aperitivo spread." },
     { name: "Dry Milano", desc: "Sleek bar pairing serious cocktails with gourmet pizza." },
+  ],
+  aperitivo: [
+    { name: "Rita & Cocktails", desc: "Navigli institution famed for its generous early-evening aperitivo spread." },
+    { name: "Living", desc: "Piazza Sempione spot known for a lavish buffet that comes with your drink." },
+    { name: "Pandenus", desc: "Neighbourhood café-bistro with a popular, food-laden aperitivo hour." },
+    { name: "Frida", desc: "Isola courtyard bar serving a classic, budget-friendly aperitivo with snacks." },
+    { name: "Le Biciclette", desc: "Art-bar near Sant'Ambrogio with a long-running aperitivo buffet." },
+    { name: "Luca e Andrea", desc: "Canalside Navigli bar with a plentiful spread to go with your spritz." },
   ],
 };
