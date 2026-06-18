@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eat — Milan Pocket Guide</title>
+<title>Drink — Milan Pocket Guide</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Where to Eat 🍝</h1>
-      <p class="intro">A handful of spots for everything from a quick bite to a proper sit-down meal.</p>
+      <h1>Where to Drink 🍸</h1>
+      <p class="intro">Aperitivo terraces and cocktail bars for that essential pre-dinner spritz.</p>
     </header>
 
     <nav>
       <a href="index.html">Home</a>
-      <a href="eat.html" class="current">Eat</a>
+      <a href="eat.html">Eat</a>
       <a href="see.html">See</a>
-      <a href="drink.html">Drink</a>
+      <a href="drink.html" class="current">Drink</a>
     </nav>
 
     <ul id="places" class="places"></ul>
@@ -31,7 +31,7 @@
   <script src="data.js"></script>
   <script>
     const list = document.getElementById("places");
-    MILAN.eat.forEach(p => {
+    MILAN.drink.forEach(p => {
       list.insertAdjacentHTML("beforeend",
         `<li class="place"><span class="name">${p.name}</span>` +
         `<span class="desc">${p.desc}</span></li>`);

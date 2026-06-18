@@ -1,5 +1,5 @@
 // The single source of truth for all place data in the Milan pocket guide.
-// Both eat.html and see.html read from this object — no page hardcodes its own list.
+// eat.html, see.html and drink.html read from this object — no page hardcodes its own list.
 // Each place is just a name and a one-line description.
 const MILAN = {
   eat: [
@@ -17,5 +17,13 @@ const MILAN = {
     { name: "Castello Sforzesco", desc: "Renaissance fortress with museums and a big park behind it." },
     { name: "Navigli", desc: "Canal district lined with bars and workshops — best at sunset." },
     { name: "Pinacoteca di Brera", desc: "Major art gallery in the arty, walkable Brera quarter." },
+  ],
+  drink: [
+    { name: "Bar Basso", desc: "Birthplace of the Negroni Sbagliato — order one in its oversized glass." },
+    { name: "Camparino in Galleria", desc: "Historic Belle Époque bar for a classic Campari spritz by the Duomo." },
+    { name: "Terrazza Aperol", desc: "Aperol's flagship terrace on Piazza del Duomo for a sunset spritz." },
+    { name: "Mag Café", desc: "Navigli cocktail spot with vintage decor and inventive mixed drinks." },
+    { name: "Rita & Cocktails", desc: "Long-running Navigli favourite known for a generous aperitivo spread." },
+    { name: "Dry Milano", desc: "Sleek bar pairing serious cocktails with gourmet pizza." },
   ],
 };

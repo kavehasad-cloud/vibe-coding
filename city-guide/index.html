@@ -11,8 +11,8 @@
     <header>
       <h1>Milan Pocket Guide 🇮🇹</h1>
       <p class="intro">
-        A tiny guide to a few favourite places in Milan — somewhere to eat and
-        something to see. Pick a page to get started.
+        A tiny guide to a few favourite places in Milan — somewhere to eat,
+        something to see, and somewhere for a drink. Pick a page to get started.
       </p>
     </header>
 
@@ -20,6 +20,7 @@
       <a href="index.html" class="current">Home</a>
       <a href="eat.html">Eat</a>
       <a href="see.html">See</a>
+      <a href="drink.html">Drink</a>
     </nav>
 
     <ul class="pages">
@@ -33,6 +34,12 @@
         <a class="page-link" href="see.html">
           <span class="name">See</span>
           <span class="desc" id="see-count">Things worth seeing.</span>
+        </a>
+      </li>
+      <li>
+        <a class="page-link" href="drink.html">
+          <span class="name">Drink</span>
+          <span class="desc" id="drink-count">Spots for a drink.</span>
         </a>
       </li>
     </ul>
@@ -49,6 +56,8 @@
       MILAN.eat.length + " places to grab a bite.";
     document.getElementById("see-count").textContent =
       MILAN.see.length + " things worth seeing.";
+    document.getElementById("drink-count").textContent =
+      MILAN.drink.length + " spots for a drink.";
   </script>
 </body>
 </html>
