@@ -1,9 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [tasks, setTasks] = useState([]) // array of { id, text, done }
+  // array of { id, text, done } — load saved tasks once on startup
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem('tasks')
+    return saved ? JSON.parse(saved) : []
+  })
   const [text, setText] = useState('') // current input value
+
+  // save to localStorage whenever tasks change
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks])
 
   function addTask() {
     if (text.trim() === '') return // ignore empty
