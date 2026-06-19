@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabaseClient'
+import { isBlank } from './noteUtils'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -50,7 +51,7 @@ function App() {
 
   async function handleAddNote() {
     const content = newNote.trim()
-    if (!content) return
+   if (isBlank(newNote)) return
     setError(null)
     setLoading(true)
     try {
