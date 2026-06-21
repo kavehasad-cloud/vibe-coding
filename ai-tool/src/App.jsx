@@ -47,7 +47,7 @@ function App() {
   return (
     <main className="tool">
       <h1>AI Text Tool</h1>
-      <p className="subtitle">Rewrite, summarize, or simplify any text.</p>
+      <p className="subtitle">Rewrite, summarize, or simplify any text — powered by AI.</p>
 
       <textarea
         className="input"
