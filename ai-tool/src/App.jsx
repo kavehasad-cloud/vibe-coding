@@ -37,6 +37,13 @@ function App() {
     }
   }
 
+  function onClear() {
+    setText('')
+    setResult('')
+    setError('')
+    setAction('rewrite') // back to default
+  }
+
   return (
     <main className="tool">
       <h1>AI Text Tool</h1>
@@ -66,14 +73,24 @@ function App() {
           ))}
         </div>
 
-        <button
-          type="button"
-          className="run"
-          onClick={onRun}
-          disabled={loading || text.trim() === ''}
-        >
-          {loading ? 'Working…' : 'Run'}
-        </button>
+        <div className="buttons">
+          <button
+            type="button"
+            className="clear"
+            onClick={onClear}
+            disabled={loading || (text === '' && result === '' && error === '')}
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            className="run"
+            onClick={onRun}
+            disabled={loading || text.trim() === ''}
+          >
+            {loading ? 'Working…' : 'Run'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}

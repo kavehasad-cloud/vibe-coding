@@ -52,6 +52,30 @@
   accent-color: var(--accent);
 }
 
+.buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.clear {
+  font: inherit;
+  padding: 8px 20px;
+  color: var(--text-h);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.clear:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .run {
   font: inherit;
   padding: 8px 20px;
