@@ -1,0 +1,97 @@
+.tool {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 48px 20px;
+  text-align: left;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--text);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 16px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.action input {
+  accent-color: var(--accent);
+}
+
+.run {
+  font: inherit;
+  padding: 8px 20px;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.run:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  padding: 12px;
+  border-radius: 8px;
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.1);
+  border: 1px solid rgba(185, 28, 28, 0.3);
+}
+
+.output {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.output h2 {
+  margin-top: 0;
+}
+
+.output p {
+  white-space: pre-wrap;
+  color: var(--text-h);
+}
