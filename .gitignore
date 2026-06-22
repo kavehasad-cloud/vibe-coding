@@ -12,3 +12,6 @@ desktop.ini
 
 # Dependencies (arrives in Phase 3)
 node_modules/
+
+# Claude Code hook activity log
+.claude/hook-activity.log
