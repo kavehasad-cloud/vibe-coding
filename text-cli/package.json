@@ -1,0 +1,12 @@
+{
+  "name": "text-cli",
+  "version": "1.0.0",
+  "description": "Command-line tool that transforms text with the Google Gemini API.",
+  "type": "module",
+  "bin": {
+    "text-cli": "cli.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
