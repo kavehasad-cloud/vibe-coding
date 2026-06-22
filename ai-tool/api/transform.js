@@ -1,10 +1,6 @@
-// Tiny Express server that holds the Gemini API key and proxies text-transform
-// requests. The key lives ONLY here (server side) — it never reaches the browser.
-import 'dotenv/config'
-import express from 'express'
-
-const app = express()
-app.use(express.json())
+// Vercel serverless function that holds the Gemini API key and proxies
+// text-transform requests. The key lives ONLY here (server side) — it never
+// reaches the browser. Vercel maps this file to the URL path /api/transform.
 
 const API_KEY = process.env.GEMINI_API_KEY
 const MODEL = 'gemini-2.5-flash-lite'
@@ -20,7 +16,11 @@ const INSTRUCTIONS = {
     'Rewrite the following text in plain, simple language a beginner can understand. Return only the simplified text.',
 }
 
-app.post('/api/transform', async (req, res) => {
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed.' })
+  }
+
   const { text, action } = req.body || {}
 
   // Validate input before doing anything else.
@@ -64,8 +64,4 @@ app.post('/api/transform', async (req, res) => {
     console.error('Transform failed:', err)
     return res.status(500).json({ error: 'Something went wrong.' })
   }
-})
-
-app.listen(3001, () => {
-  console.log('API server running on http://localhost:3001')
-})
+}
