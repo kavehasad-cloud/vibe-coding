@@ -60,8 +60,9 @@ function App() {
       <div className="controls">
         <div className="actions" role="radiogroup" aria-label="Action">
           {ACTIONS.map((a) => (
-            <label key={a.value} className="action">
+            <label key={a.value} className="segment">
               <input
+                className="sr-only"
                 type="radio"
                 name="action"
                 value={a.value}
@@ -95,12 +96,14 @@ function App() {
 
       {error && <div className="error">{error}</div>}
 
-      {result && (
-        <div className="output">
-          <h2>Result</h2>
+      <div className={`output${result ? '' : ' empty'}`}>
+        <h2>Result</h2>
+        {result ? (
           <p>{result}</p>
-        </div>
-      )}
+        ) : (
+          <p className="placeholder">Your result will appear here.</p>
+        )}
+      </div>
     </main>
   )
 }
