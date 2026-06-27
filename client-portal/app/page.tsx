@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { NewClientForm } from "./new-client-form";
+import { ClientRow } from "./client-row";
 import { Button } from "@/components/ui/button";
 
 async function logout() {
@@ -43,12 +44,7 @@ export default async function Home() {
       ) : (
         <ul className="mt-6 divide-y rounded-lg border">
           {clients.map((client) => (
-            <li key={client.id} className="px-4 py-3">
-              <p className="font-medium">{client.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {client.contact_email}
-              </p>
-            </li>
+            <ClientRow key={client.id} client={client} />
           ))}
         </ul>
       )}
