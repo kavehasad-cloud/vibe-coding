@@ -2,8 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { NewProjectForm } from "../../new-project-form";
-import { ProjectStatusSelect } from "../../project-status-select";
-import { ProjectHealthSelect } from "../../project-health-select";
+import { ProjectRow } from "../../project-row";
 
 export default async function ClientDetailPage({
   params,
@@ -57,29 +56,7 @@ export default async function ClientDetailPage({
       ) : (
         <ul className="mt-4 divide-y rounded-lg border">
           {projects.map((project) => (
-            <li
-              key={project.id}
-              className="flex items-center justify-between gap-3 px-4 py-3"
-            >
-              <p className="font-medium">{project.name}</p>
-              <div className="flex shrink-0 items-center gap-2">
-                {project.status === "active" ||
-                project.status === "on_hold" ? (
-                  <ProjectHealthSelect
-                    projectId={project.id}
-                    clientId={id}
-                    currentHealth={project.health}
-                  />
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-                <ProjectStatusSelect
-                  projectId={project.id}
-                  clientId={id}
-                  currentStatus={project.status}
-                />
-              </div>
-            </li>
+            <ProjectRow key={project.id} project={project} clientId={id} />
           ))}
         </ul>
       )}

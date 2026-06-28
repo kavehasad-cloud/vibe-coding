@@ -153,6 +153,52 @@ export async function updateProjectHealthAction(
   return {};
 }
 
+export async function updateProjectAction(
+  _prevState: CreateClientState,
+  formData: FormData
+): Promise<CreateClientState> {
+  const id = String(formData.get("id") ?? "");
+  const clientId = String(formData.get("client_id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!id) {
+    return { error: "Missing project id." };
+  }
+  if (!name) {
+    return { error: "Name is required." };
+  }
+
+  const supabase = await createClient();
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("projects")
+    .update({ name })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  return { success: true };
+}
+
+export async function deleteProjectAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const clientId = String(formData.get("client_id") ?? "");
+  if (!id) return;
+
+  const supabase = await createClient();
+  // RLS enforces ownership on delete.
+  const { error } = await supabase.from("projects").delete().eq("id", id);
+  if (error) {
+    console.error("deleteProjectAction:", error.message);
+    return;
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+}
+
 export async function deleteClientAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
