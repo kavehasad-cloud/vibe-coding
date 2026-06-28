@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { NewProjectForm } from "../../new-project-form";
+import { ProjectStatusSelect } from "../../project-status-select";
 
 export default async function ClientDetailPage({
   params,
@@ -60,9 +61,11 @@ export default async function ClientDetailPage({
               className="flex items-center justify-between gap-3 px-4 py-3"
             >
               <p className="font-medium">{project.name}</p>
-              <span className="shrink-0 text-sm text-muted-foreground">
-                {project.status}
-              </span>
+              <ProjectStatusSelect
+                projectId={project.id}
+                clientId={id}
+                currentStatus={project.status}
+              />
             </li>
           ))}
         </ul>

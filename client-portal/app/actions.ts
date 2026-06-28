@@ -89,6 +89,40 @@ export async function createProjectAction(
   return { success: true };
 }
 
+const PROJECT_STATUSES = [
+  "active",
+  "on_hold",
+  "completed",
+  "cancelled",
+] as const;
+
+export async function updateProjectStatusAction(
+  projectId: string,
+  clientId: string,
+  status: string
+): Promise<{ error?: string }> {
+  if (!projectId) {
+    return { error: "Missing project id." };
+  }
+  if (!PROJECT_STATUSES.includes(status as (typeof PROJECT_STATUSES)[number])) {
+    return { error: "Invalid status." };
+  }
+
+  const supabase = await createClient();
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("projects")
+    .update({ status })
+    .eq("id", projectId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  return {};
+}
+
 export async function deleteClientAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
