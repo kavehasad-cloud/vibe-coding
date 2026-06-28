@@ -24,7 +24,7 @@ export default async function Home() {
 
   const { data: clients } = await supabase
     .from("clients")
-    .select("id, name, contact_email, notes");
+    .select("id, name, contact_email, notes, projects(count)");
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -44,7 +44,11 @@ export default async function Home() {
       ) : (
         <ul className="mt-6 divide-y rounded-lg border">
           {clients.map((client) => (
-            <ClientRow key={client.id} client={client} />
+            <ClientRow
+              key={client.id}
+              client={client}
+              projectCount={client.projects?.[0]?.count ?? 0}
+            />
           ))}
         </ul>
       )}

@@ -18,12 +18,23 @@ type Client = {
 
 const initialState: CreateClientState = {};
 
-export function ClientRow({ client }: { client: Client }) {
+export function ClientRow({
+  client,
+  projectCount,
+}: {
+  client: Client;
+  projectCount: number;
+}) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(
     updateClientAction,
     initialState
   );
+
+  const projectLabel =
+    projectCount === 0
+      ? "No projects"
+      : `${projectCount} project${projectCount === 1 ? "" : "s"}`;
 
   // Leave edit mode once a save succeeds.
   useEffect(() => {
@@ -76,12 +87,17 @@ export function ClientRow({ client }: { client: Client }) {
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <Link
-          href={`/clients/${client.id}`}
-          className="font-medium hover:underline"
-        >
-          {client.name}
-        </Link>
+        <div className="flex items-baseline gap-2">
+          <Link
+            href={`/clients/${client.id}`}
+            className="font-medium hover:underline"
+          >
+            {client.name}
+          </Link>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {projectLabel}
+          </span>
+        </div>
         <p className="truncate text-sm text-muted-foreground">
           {client.contact_email}
         </p>
