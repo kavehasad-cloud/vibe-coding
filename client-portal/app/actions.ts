@@ -79,7 +79,7 @@ export async function createProjectAction(
   // owner_id auto-fills via the DB default; RLS enforces ownership.
   const { error } = await supabase
     .from("projects")
-    .insert({ client_id: clientId, name });
+    .insert({ client_id: clientId, name, status: "not_started" });
 
   if (error) {
     return { error: error.message };
@@ -90,6 +90,7 @@ export async function createProjectAction(
 }
 
 const PROJECT_STATUSES = [
+  "not_started",
   "active",
   "on_hold",
   "completed",
@@ -113,6 +114,35 @@ export async function updateProjectStatusAction(
   const { error } = await supabase
     .from("projects")
     .update({ status })
+    .eq("id", projectId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  return {};
+}
+
+const PROJECT_HEALTH = ["green", "amber", "red"] as const;
+
+export async function updateProjectHealthAction(
+  projectId: string,
+  clientId: string,
+  health: string
+): Promise<{ error?: string }> {
+  if (!projectId) {
+    return { error: "Missing project id." };
+  }
+  if (!PROJECT_HEALTH.includes(health as (typeof PROJECT_HEALTH)[number])) {
+    return { error: "Invalid health." };
+  }
+
+  const supabase = await createClient();
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("projects")
+    .update({ health })
     .eq("id", projectId);
 
   if (error) {

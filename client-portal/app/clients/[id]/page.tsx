@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectStatusSelect } from "../../project-status-select";
+import { ProjectHealthSelect } from "../../project-health-select";
 
 export default async function ClientDetailPage({
   params,
@@ -32,7 +33,7 @@ export default async function ClientDetailPage({
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, name, status, created_at")
+    .select("id, name, status, health, created_at")
     .eq("client_id", id)
     .order("created_at");
 
@@ -61,11 +62,23 @@ export default async function ClientDetailPage({
               className="flex items-center justify-between gap-3 px-4 py-3"
             >
               <p className="font-medium">{project.name}</p>
-              <ProjectStatusSelect
-                projectId={project.id}
-                clientId={id}
-                currentStatus={project.status}
-              />
+              <div className="flex shrink-0 items-center gap-2">
+                {project.status === "active" ||
+                project.status === "on_hold" ? (
+                  <ProjectHealthSelect
+                    projectId={project.id}
+                    clientId={id}
+                    currentHealth={project.health}
+                  />
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+                <ProjectStatusSelect
+                  projectId={project.id}
+                  clientId={id}
+                  currentStatus={project.status}
+                />
+              </div>
             </li>
           ))}
         </ul>

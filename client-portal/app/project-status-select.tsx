@@ -4,6 +4,7 @@ import { useOptimistic, useState, useTransition } from "react";
 import { updateProjectStatusAction } from "./actions";
 
 const STATUS_OPTIONS = [
+  { value: "not_started", label: "Not started" },
   { value: "active", label: "Active" },
   { value: "on_hold", label: "On hold" },
   { value: "completed", label: "Completed" },
