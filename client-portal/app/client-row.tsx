@@ -8,6 +8,7 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 type Client = {
   id: string;
@@ -75,7 +76,12 @@ export function ClientRow({ client }: { client: Client }) {
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <p className="font-medium">{client.name}</p>
+        <Link
+          href={`/clients/${client.id}`}
+          className="font-medium hover:underline"
+        >
+          {client.name}
+        </Link>
         <p className="truncate text-sm text-muted-foreground">
           {client.contact_email}
         </p>

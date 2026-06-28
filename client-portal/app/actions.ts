@@ -59,6 +59,36 @@ export async function updateClientAction(
   return { success: true };
 }
 
+export type CreateProjectState = { error?: string; success?: boolean };
+
+export async function createProjectAction(
+  _prevState: CreateProjectState,
+  formData: FormData
+): Promise<CreateProjectState> {
+  const clientId = String(formData.get("client_id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+
+  if (!clientId) {
+    return { error: "Missing client id." };
+  }
+  if (!name) {
+    return { error: "Name is required." };
+  }
+
+  const supabase = await createClient();
+  // owner_id auto-fills via the DB default; RLS enforces ownership.
+  const { error } = await supabase
+    .from("projects")
+    .insert({ client_id: clientId, name });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  return { success: true };
+}
+
 export async function deleteClientAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
