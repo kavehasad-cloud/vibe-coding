@@ -22,6 +22,16 @@ export default async function Home() {
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, client_id")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role === "client") {
+    redirect("/portal");
+  }
+
   const { data: clients } = await supabase
     .from("clients")
     .select("id, name, contact_email, notes, projects(count)");
