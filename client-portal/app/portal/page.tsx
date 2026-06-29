@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 async function logout() {
@@ -82,7 +83,12 @@ export default async function PortalPage() {
               key={project.id}
               className="flex items-center justify-between gap-3 px-4 py-3"
             >
-              <p className="min-w-0 truncate font-medium">{project.name}</p>
+              <Link
+                href={`/clients/${profile.client_id}/projects/${project.id}`}
+                className="min-w-0 truncate font-medium hover:underline"
+              >
+                {project.name}
+              </Link>
               <div className="flex shrink-0 items-center gap-2">
                 <span className="text-sm text-muted-foreground">
                   {STATUS_LABELS[project.status] ?? project.status}

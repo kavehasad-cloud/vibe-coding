@@ -199,6 +199,76 @@ export async function deleteProjectAction(formData: FormData) {
   revalidatePath(`/clients/${clientId}`);
 }
 
+export type CreateMilestoneState = { error?: string; success?: boolean };
+
+export async function createMilestoneAction(
+  _prevState: CreateMilestoneState,
+  formData: FormData
+): Promise<CreateMilestoneState> {
+  const projectId = String(formData.get("project_id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const dueDate = String(formData.get("due_date") ?? "").trim();
+
+  if (!projectId) {
+    return { error: "Missing project id." };
+  }
+  if (!name) {
+    return { error: "Name is required." };
+  }
+
+  const supabase = await createClient();
+  // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
+  const { error } = await supabase
+    .from("milestones")
+    .insert({ project_id: projectId, name, due_date: dueDate || null });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
+}
+
+export async function toggleMilestoneAction(
+  id: string,
+  isDone: boolean,
+  projectPath: string
+): Promise<{ error?: string }> {
+  if (!id) {
+    return { error: "Missing milestone id." };
+  }
+
+  const supabase = await createClient();
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("milestones")
+    .update({ is_done: isDone })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return {};
+}
+
+export async function deleteMilestoneAction(id: string, projectPath: string) {
+  if (!id) return;
+
+  const supabase = await createClient();
+  // RLS enforces ownership on delete.
+  const { error } = await supabase.from("milestones").delete().eq("id", id);
+  if (error) {
+    console.error("deleteMilestoneAction:", error.message);
+    return;
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+}
+
 export async function deleteClientAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;

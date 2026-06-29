@@ -6,6 +6,7 @@ import {
   deleteProjectAction,
   type CreateClientState,
 } from "./actions";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectStatusSelect } from "./project-status-select";
@@ -77,7 +78,12 @@ export function ProjectRow({
 
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
-      <p className="min-w-0 truncate font-medium">{project.name}</p>
+      <Link
+        href={`/clients/${clientId}/projects/${project.id}`}
+        className="min-w-0 truncate font-medium hover:underline"
+      >
+        {project.name}
+      </Link>
       <div className="flex shrink-0 items-center gap-2">
         {project.status === "active" || project.status === "on_hold" ? (
           <ProjectHealthSelect
