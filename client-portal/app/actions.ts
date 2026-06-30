@@ -334,3 +334,113 @@ export async function deleteClientAction(formData: FormData) {
 
   revalidatePath("/");
 }
+
+const RISK_LEVELS = ["low", "medium", "high"] as const;
+
+export type CreateRiskState = { error?: string; success?: boolean };
+
+export async function createRiskAction(
+  _prevState: CreateRiskState,
+  formData: FormData
+): Promise<CreateRiskState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const projectId = String(formData.get("project_id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  const likelihood = String(formData.get("likelihood") ?? "");
+  const impact = String(formData.get("impact") ?? "");
+  const mitigation = String(formData.get("mitigation") ?? "").trim();
+
+  if (!projectId) {
+    return { error: "Missing project id." };
+  }
+  if (!description) {
+    return { error: "Description is required." };
+  }
+  if (!RISK_LEVELS.includes(likelihood as (typeof RISK_LEVELS)[number])) {
+    return { error: "Invalid likelihood." };
+  }
+  if (!RISK_LEVELS.includes(impact as (typeof RISK_LEVELS)[number])) {
+    return { error: "Invalid impact." };
+  }
+
+  // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
+  const { error } = await supabase.from("risks").insert({
+    project_id: projectId,
+    description,
+    likelihood,
+    impact,
+    mitigation: mitigation || null,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
+}
+
+export async function updateRiskAction(
+  _prevState: CreateRiskState,
+  formData: FormData
+): Promise<CreateRiskState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const id = String(formData.get("id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+  const description = String(formData.get("description") ?? "").trim();
+  const likelihood = String(formData.get("likelihood") ?? "");
+  const impact = String(formData.get("impact") ?? "");
+  const mitigation = String(formData.get("mitigation") ?? "").trim();
+
+  if (!id) {
+    return { error: "Missing risk id." };
+  }
+  if (!description) {
+    return { error: "Description is required." };
+  }
+  if (!RISK_LEVELS.includes(likelihood as (typeof RISK_LEVELS)[number])) {
+    return { error: "Invalid likelihood." };
+  }
+  if (!RISK_LEVELS.includes(impact as (typeof RISK_LEVELS)[number])) {
+    return { error: "Invalid impact." };
+  }
+
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("risks")
+    .update({
+      description,
+      likelihood,
+      impact,
+      mitigation: mitigation || null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
+}
+
+export async function deleteRiskAction(id: string, projectPath: string) {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return;
+
+  if (!id) return;
+
+  // RLS enforces ownership on delete.
+  const { error } = await supabase.from("risks").delete().eq("id", id);
+  if (error) {
+    console.error("deleteRiskAction:", error.message);
+    return;
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+}
