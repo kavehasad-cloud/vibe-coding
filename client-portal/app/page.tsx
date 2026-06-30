@@ -22,13 +22,15 @@ export default async function Home() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, client_id")
+    .select("role")
     .eq("id", user.id)
     .single();
 
-  if (profile?.role === "client") {
+  // Fail closed: only an explicit admin role renders this page. A profile-read
+  // error, a missing profile, or any non-admin role is sent to the portal.
+  if (profileError || profile?.role !== "admin") {
     redirect("/portal");
   }
 

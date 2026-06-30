@@ -53,6 +53,12 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
+  // Prevent cross-client access: the project must belong to the client in the
+  // URL. 404 (not 403) so we don't reveal that the project exists elsewhere.
+  if (project.client_id !== id) {
+    notFound();
+  }
+
   const showHealth =
     project.status === "active" || project.status === "on_hold";
 

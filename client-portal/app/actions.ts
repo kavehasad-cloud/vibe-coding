@@ -3,12 +3,44 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 
+// Defense-in-depth: Server Actions are reachable via direct POST, not just
+// through the UI. RLS still applies in the DB, but every write also verifies
+// here that the caller is an authenticated admin. Fails closed: any missing
+// user, profile-read error, or role other than exactly "admin" is rejected.
+async function requireAdmin(): Promise<{
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  error?: string;
+}> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { supabase, error: "Not authenticated." };
+  }
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (error || profile?.role !== "admin") {
+    return { supabase, error: "Not authorized." };
+  }
+
+  return { supabase };
+}
+
 export type CreateClientState = { error?: string; success?: boolean };
 
 export async function createClientAction(
   _prevState: CreateClientState,
   formData: FormData
 ): Promise<CreateClientState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   const name = String(formData.get("name") ?? "").trim();
   const contactEmail = String(formData.get("contact_email") ?? "").trim();
 
@@ -16,7 +48,6 @@ export async function createClientAction(
     return { error: "Name is required." };
   }
 
-  const supabase = await createClient();
   const { error } = await supabase
     .from("clients")
     .insert({ name, contact_email: contactEmail || null });
@@ -33,6 +64,9 @@ export async function updateClientAction(
   _prevState: CreateClientState,
   formData: FormData
 ): Promise<CreateClientState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const contactEmail = String(formData.get("contact_email") ?? "").trim();
@@ -44,7 +78,6 @@ export async function updateClientAction(
     return { error: "Name is required." };
   }
 
-  const supabase = await createClient();
   // RLS (auth.uid() = owner_id) enforces ownership; no manual owner filter.
   const { error } = await supabase
     .from("clients")
@@ -65,6 +98,9 @@ export async function createProjectAction(
   _prevState: CreateProjectState,
   formData: FormData
 ): Promise<CreateProjectState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   const clientId = String(formData.get("client_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
 
@@ -75,7 +111,6 @@ export async function createProjectAction(
     return { error: "Name is required." };
   }
 
-  const supabase = await createClient();
   // owner_id auto-fills via the DB default; RLS enforces ownership.
   const { error } = await supabase
     .from("projects")
@@ -102,6 +137,9 @@ export async function updateProjectStatusAction(
   clientId: string,
   status: string
 ): Promise<{ error?: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   if (!projectId) {
     return { error: "Missing project id." };
   }
@@ -109,7 +147,6 @@ export async function updateProjectStatusAction(
     return { error: "Invalid status." };
   }
 
-  const supabase = await createClient();
   // RLS enforces ownership on update; no manual owner filter.
   const { error } = await supabase
     .from("projects")
@@ -131,6 +168,9 @@ export async function updateProjectHealthAction(
   clientId: string,
   health: string
 ): Promise<{ error?: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   if (!projectId) {
     return { error: "Missing project id." };
   }
@@ -138,7 +178,6 @@ export async function updateProjectHealthAction(
     return { error: "Invalid health." };
   }
 
-  const supabase = await createClient();
   // RLS enforces ownership on update; no manual owner filter.
   const { error } = await supabase
     .from("projects")
@@ -157,6 +196,9 @@ export async function updateProjectAction(
   _prevState: CreateClientState,
   formData: FormData
 ): Promise<CreateClientState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   const id = String(formData.get("id") ?? "");
   const clientId = String(formData.get("client_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -168,7 +210,6 @@ export async function updateProjectAction(
     return { error: "Name is required." };
   }
 
-  const supabase = await createClient();
   // RLS enforces ownership on update; no manual owner filter.
   const { error } = await supabase
     .from("projects")
@@ -184,11 +225,13 @@ export async function updateProjectAction(
 }
 
 export async function deleteProjectAction(formData: FormData) {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return;
+
   const id = String(formData.get("id") ?? "");
   const clientId = String(formData.get("client_id") ?? "");
   if (!id) return;
 
-  const supabase = await createClient();
   // RLS enforces ownership on delete.
   const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) {
@@ -205,6 +248,9 @@ export async function createMilestoneAction(
   _prevState: CreateMilestoneState,
   formData: FormData
 ): Promise<CreateMilestoneState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   const projectId = String(formData.get("project_id") ?? "");
   const projectPath = String(formData.get("project_path") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -217,7 +263,6 @@ export async function createMilestoneAction(
     return { error: "Name is required." };
   }
 
-  const supabase = await createClient();
   // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
   const { error } = await supabase
     .from("milestones")
@@ -236,11 +281,13 @@ export async function toggleMilestoneAction(
   isDone: boolean,
   projectPath: string
 ): Promise<{ error?: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
   if (!id) {
     return { error: "Missing milestone id." };
   }
 
-  const supabase = await createClient();
   // RLS enforces ownership on update; no manual owner filter.
   const { error } = await supabase
     .from("milestones")
@@ -256,9 +303,11 @@ export async function toggleMilestoneAction(
 }
 
 export async function deleteMilestoneAction(id: string, projectPath: string) {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return;
+
   if (!id) return;
 
-  const supabase = await createClient();
   // RLS enforces ownership on delete.
   const { error } = await supabase.from("milestones").delete().eq("id", id);
   if (error) {
@@ -270,10 +319,12 @@ export async function deleteMilestoneAction(id: string, projectPath: string) {
 }
 
 export async function deleteClientAction(formData: FormData) {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return;
+
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  const supabase = await createClient();
   // RLS enforces ownership on delete.
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) {

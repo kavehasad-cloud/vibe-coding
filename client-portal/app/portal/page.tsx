@@ -42,7 +42,7 @@ export default async function PortalPage() {
     .single();
 
   if (!profile?.client_id) {
-    redirect("/");
+    redirect("/login");
   }
 
   const { data: client } = await supabase
@@ -52,7 +52,7 @@ export default async function PortalPage() {
     .single();
 
   if (!client) {
-    redirect("/");
+    redirect("/login");
   }
 
   const { data: projects } = await supabase
