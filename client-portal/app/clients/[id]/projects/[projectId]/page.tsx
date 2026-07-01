@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { MilestoneRow } from "../../../../milestone-row";
+import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
 import { RiskRow } from "../../../../risk-row";
 import { NewRiskForm } from "../../../../new-risk-form";
@@ -70,11 +70,8 @@ export default async function ProjectDetailPage({
     .eq("project_id", projectId)
     .order("due_date");
 
-  // Block 3 splits the (already due_date-ordered) milestones into done vs not.
-  // Round 1 shows them all; the 30-day "last 2-3 / next 2-3" trim comes later.
+  // Block 3 renders these as a Gantt chart (start_date → due_date bars).
   const allMilestones = milestones ?? [];
-  const doneMilestones = allMilestones.filter((m) => m.is_done);
-  const upcomingMilestones = allMilestones.filter((m) => !m.is_done);
 
   const { data: risks } = await supabase
     .from("risks")
@@ -148,47 +145,11 @@ export default async function ProjectDetailPage({
         <section className="rounded-lg border p-6">
           <h2 className="text-xl font-medium">Timeline &amp; Velocity</h2>
 
-          {allMilestones.length === 0 ? (
-            <p className="mt-2 text-muted-foreground">No milestones yet</p>
-          ) : (
-            <div className="mt-4 space-y-6">
-              {doneMilestones.length > 0 ? (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Recent (done)
-                  </h3>
-                  <ul className="mt-2 divide-y rounded-lg border">
-                    {doneMilestones.map((milestone) => (
-                      <MilestoneRow
-                        key={milestone.id}
-                        milestone={milestone}
-                        projectPath={projectPath}
-                        readOnly={!isAdmin}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {upcomingMilestones.length > 0 ? (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Upcoming
-                  </h3>
-                  <ul className="mt-2 divide-y rounded-lg border">
-                    {upcomingMilestones.map((milestone) => (
-                      <MilestoneRow
-                        key={milestone.id}
-                        milestone={milestone}
-                        projectPath={projectPath}
-                        readOnly={!isAdmin}
-                      />
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </div>
-          )}
+          <GanttChart
+            tasks={allMilestones}
+            projectPath={projectPath}
+            readOnly={!isAdmin}
+          />
 
           {isAdmin ? (
             <NewMilestoneForm projectId={projectId} projectPath={projectPath} />
