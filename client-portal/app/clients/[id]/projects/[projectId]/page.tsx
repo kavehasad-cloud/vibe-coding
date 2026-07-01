@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { ExecSummary } from "../../../../exec-summary";
 import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
 import { RiskRow } from "../../../../risk-row";
@@ -47,7 +48,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("name, status, health, client_id")
+    .select("name, status, health, client_id, summary, asks, issues")
     .eq("id", projectId)
     .single();
 
@@ -133,12 +134,17 @@ export default async function ProjectDetailPage({
           </dl>
         </section>
 
-        {/* Block 2 — Executive Summary (placeholder) */}
+        {/* Block 2 — Executive Summary */}
         <section className="rounded-lg border p-6">
           <h2 className="text-xl font-medium">Executive Summary</h2>
-          <p className="mt-2 text-muted-foreground">
-            Narrative summary, key asks, and current issues will appear here.
-          </p>
+          <ExecSummary
+            projectId={projectId}
+            projectPath={projectPath}
+            summary={project.summary}
+            asks={project.asks}
+            issues={project.issues}
+            readOnly={!isAdmin}
+          />
         </section>
 
         {/* Block 3 — Timeline & Velocity (milestones) */}
