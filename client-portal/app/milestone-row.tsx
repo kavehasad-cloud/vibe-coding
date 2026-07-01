@@ -7,19 +7,31 @@ import { Button } from "@/components/ui/button";
 type Milestone = {
   id: string;
   name: string;
+  start_date: string | null;
   due_date: string | null;
   is_done: boolean;
 };
 
-// due_date is a date-only string (YYYY-MM-DD). Format from its parts so a
-// UTC-midnight parse can't shift it a day in the local timezone.
-function formatDueDate(due: string): string {
-  const [year, month, day] = due.split("-").map(Number);
+// Dates are date-only strings (YYYY-MM-DD). Format from their parts so a
+// UTC-midnight parse can't shift them a day in the local timezone.
+function formatDate(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
   return new Date(year, month - 1, day).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+}
+
+// Adaptive range: "start → due" when both exist, otherwise whichever one does.
+function formatDateRange(
+  start: string | null,
+  due: string | null
+): string | null {
+  if (start && due) return `${formatDate(start)} → ${formatDate(due)}`;
+  if (start) return formatDate(start);
+  if (due) return formatDate(due);
+  return null;
 }
 
 export function MilestoneRow({
@@ -56,9 +68,9 @@ export function MilestoneRow({
         >
           {milestone.name}
         </span>
-        {milestone.due_date ? (
+        {formatDateRange(milestone.start_date, milestone.due_date) ? (
           <span className="shrink-0 text-sm text-muted-foreground">
-            {formatDueDate(milestone.due_date)}
+            {formatDateRange(milestone.start_date, milestone.due_date)}
           </span>
         ) : null}
       </li>
@@ -98,9 +110,9 @@ export function MilestoneRow({
       >
         {milestone.name}
       </span>
-      {milestone.due_date ? (
+      {formatDateRange(milestone.start_date, milestone.due_date) ? (
         <span className="shrink-0 text-sm text-muted-foreground">
-          {formatDueDate(milestone.due_date)}
+          {formatDateRange(milestone.start_date, milestone.due_date)}
         </span>
       ) : null}
       <Button

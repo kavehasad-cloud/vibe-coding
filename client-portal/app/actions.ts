@@ -254,6 +254,7 @@ export async function createMilestoneAction(
   const projectId = String(formData.get("project_id") ?? "");
   const projectPath = String(formData.get("project_path") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const startDate = String(formData.get("start_date") ?? "").trim();
   const dueDate = String(formData.get("due_date") ?? "").trim();
 
   if (!projectId) {
@@ -262,11 +263,17 @@ export async function createMilestoneAction(
   if (!name) {
     return { error: "Name is required." };
   }
+  if (!startDate) {
+    return { error: "Start date is required." };
+  }
 
   // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
-  const { error } = await supabase
-    .from("milestones")
-    .insert({ project_id: projectId, name, due_date: dueDate || null });
+  const { error } = await supabase.from("milestones").insert({
+    project_id: projectId,
+    name,
+    start_date: startDate,
+    due_date: dueDate || null,
+  });
 
   if (error) {
     return { error: error.message };
@@ -300,6 +307,43 @@ export async function toggleMilestoneAction(
 
   if (projectPath) revalidatePath(projectPath);
   return {};
+}
+
+export async function updateMilestoneAction(
+  _prevState: CreateMilestoneState,
+  formData: FormData
+): Promise<CreateMilestoneState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const id = String(formData.get("id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const startDate = String(formData.get("start_date") ?? "").trim();
+  const dueDate = String(formData.get("due_date") ?? "").trim();
+
+  if (!id) {
+    return { error: "Missing milestone id." };
+  }
+  if (!name) {
+    return { error: "Name is required." };
+  }
+  if (!startDate) {
+    return { error: "Start date is required." };
+  }
+
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("milestones")
+    .update({ name, start_date: startDate, due_date: dueDate || null })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
 }
 
 export async function deleteMilestoneAction(id: string, projectPath: string) {

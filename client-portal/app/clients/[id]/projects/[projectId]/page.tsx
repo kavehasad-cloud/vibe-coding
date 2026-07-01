@@ -66,7 +66,7 @@ export default async function ProjectDetailPage({
 
   const { data: milestones } = await supabase
     .from("milestones")
-    .select("id, name, due_date, is_done")
+    .select("id, name, start_date, due_date, is_done")
     .eq("project_id", projectId)
     .order("due_date");
 

@@ -44,6 +44,12 @@ export function NewMilestoneForm({
         />
       </div>
       <div className="space-y-1.5">
+        <label htmlFor="milestone-start" className="text-sm font-medium">
+          Start date
+        </label>
+        <Input id="milestone-start" name="start_date" type="date" required />
+      </div>
+      <div className="space-y-1.5">
         <label htmlFor="milestone-due" className="text-sm font-medium">
           Due date
         </label>
