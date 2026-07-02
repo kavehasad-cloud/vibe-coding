@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { NewClientForm } from "./new-client-form";
 import { ClientRow } from "./client-row";
 import { Button } from "@/components/ui/button";
@@ -42,11 +43,16 @@ export default async function Home() {
     <main className="mx-auto max-w-2xl px-6 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">Clients</h1>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Log out
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard">Dashboard</Link>
           </Button>
-        </form>
+          <form action={logout}>
+            <Button type="submit" variant="outline" size="sm">
+              Log out
+            </Button>
+          </form>
+        </div>
       </div>
 
       <NewClientForm />

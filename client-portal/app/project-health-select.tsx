@@ -2,18 +2,13 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { updateProjectHealthAction } from "./actions";
+import { HEALTH_STYLES } from "@/app/status-labels";
 
 const HEALTH_OPTIONS = [
   { value: "green", label: "Green" },
   { value: "amber", label: "Amber" },
   { value: "red", label: "Red" },
 ] as const;
-
-const HEALTH_STYLES: Record<string, string> = {
-  green: "border-green-500 bg-green-50 text-green-700",
-  amber: "border-amber-500 bg-amber-50 text-amber-700",
-  red: "border-red-500 bg-red-50 text-red-700",
-};
 
 export function ProjectHealthSelect({
   projectId,

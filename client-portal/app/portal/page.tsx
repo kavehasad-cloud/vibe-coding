@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
 
 async function logout() {
   "use server";
@@ -9,20 +10,6 @@ async function logout() {
   await supabase.auth.signOut();
   redirect("/login");
 }
-
-const STATUS_LABELS: Record<string, string> = {
-  not_started: "Not started",
-  active: "Active",
-  on_hold: "On hold",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-const HEALTH_STYLES: Record<string, string> = {
-  green: "border-green-500 bg-green-50 text-green-700",
-  amber: "border-amber-500 bg-amber-50 text-amber-700",
-  red: "border-red-500 bg-red-50 text-red-700",
-};
 
 export default async function PortalPage() {
   const supabase = await createClient();

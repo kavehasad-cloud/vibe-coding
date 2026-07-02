@@ -7,20 +7,7 @@ import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
 import { RiskRow } from "../../../../risk-row";
 import { NewRiskForm } from "../../../../new-risk-form";
-
-const STATUS_LABELS: Record<string, string> = {
-  not_started: "Not started",
-  active: "Active",
-  on_hold: "On hold",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-const HEALTH_STYLES: Record<string, string> = {
-  green: "border-green-500 bg-green-50 text-green-700",
-  amber: "border-amber-500 bg-amber-50 text-amber-700",
-  red: "border-red-500 bg-red-50 text-red-700",
-};
+import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
 
 export default async function ProjectDetailPage({
   params,
