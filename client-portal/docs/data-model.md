@@ -1,9 +1,9 @@
 # Client Portal — Data Model
 
-*Phase 10, Stage 3 (Architect) · Day 9 · 2026-06-24*
+*Last updated: 2026-07-02 · Status: reflects live schema through Day 17.*
 
-The blueprint of what the app stores and how it connects — the handoff into setting
-up the database. *(GitHub renders the diagram below automatically.)*
+The blueprint of what the app actually stores and how it connects.
+*(GitHub renders the diagram below automatically.)*
 
 ---
 
@@ -11,92 +11,172 @@ up the database. *(GitHub renders the diagram below automatically.)*
 
 ```mermaid
 erDiagram
-  USERS ||--o{ CLIENTS : owns
+  AUTH_USERS ||--|| PROFILES : "is"
+  AUTH_USERS ||--o{ CLIENTS : owns
+  CLIENTS ||--o| PROFILES : "portal login for"
   CLIENTS ||--o{ PROJECTS : has
   PROJECTS ||--o{ MILESTONES : tracks
-  PROJECTS ||--o{ TIME_ENTRIES : logs
-  USERS ||--o{ TIME_ENTRIES : records
-  USERS {
-    uuid id PK
-    string email
-    string role
-    string name
+  PROJECTS ||--o{ RISKS : carries
+
+  PROFILES {
+    uuid id PK "= auth.users.id"
+    string role "admin | client, default admin"
+    uuid client_id FK "null for admins"
+    timestamptz created_at
   }
   CLIENTS {
     uuid id PK
-    uuid owner_id FK
+    uuid owner_id FK "-> auth.users, default auth.uid()"
     string name
     string contact_email
     text notes
+    timestamptz created_at
   }
   PROJECTS {
     uuid id PK
-    uuid client_id FK
-    string code
+    uuid client_id FK "-> clients, not null, on delete cascade"
+    uuid owner_id FK "-> auth.users, default auth.uid()"
     string name
-    string status
-    string pm
-    money budget
+    string status "default not_started"
+    string health "default green"
+    text summary
+    text asks
+    text issues
+    numeric budget
+    numeric actual_spend
+    string resourcing "staffed | stretched | bottlenecked"
+    timestamptz created_at
   }
   MILESTONES {
     uuid id PK
-    uuid project_id FK
-    string title
-    date due_date
-    string status
+    uuid project_id FK "-> projects, on delete cascade"
+    uuid owner_id FK "-> auth.users, default auth.uid()"
+    string name
+    date start_date "not null"
+    date due_date "nullable"
+    boolean is_done "default false"
+    timestamptz created_at
   }
-  TIME_ENTRIES {
+  RISKS {
     uuid id PK
-    uuid project_id FK
-    uuid user_id FK
-    date entry_date
-    decimal hours
+    uuid project_id FK "-> projects, on delete cascade"
+    uuid owner_id FK "-> auth.users, default auth.uid()"
     text description
+    string likelihood "low | medium | high"
+    string impact "low | medium | high"
+    text mitigation "nullable"
+    timestamptz created_at
   }
 ```
+
+> `||` = one, `o{` = many, `o|` = zero-or-one. **PK** = unique row ID.
+> **FK** = a pointer to another table's row (the wire that makes the connection).
+> `auth.users` is Supabase's built-in auth table — we don't create it.
+
+---
+
+## Conventions shared by every table
+
+- **RLS is ON** for all five tables — every read/write is filtered by a policy in
+  the database, not just by the app.
+- `id uuid PK default gen_random_uuid()` — **except `profiles`**, whose `id` *is*
+  the `auth.users.id` (one profile per login).
+- `created_at timestamptz default now()`.
+- `owner_id uuid references auth.users(id) default auth.uid()` on clients,
+  projects, milestones, risks — auto-stamped to whoever is logged in. This is the
+  column the per-user RLS policies key off.
 
 ---
 
 ## The tables (plain words)
 
-- **users** — login accounts. `role` distinguishes the consultant (you) from
-  clients (who log in later for the read-only view).
-- **clients** — the consulting clients. `owner_id` points to the consultant who
-  owns the relationship.
-- **projects** — live under a client (`client_id`). Holds the project code, name,
-  RAG status, PM, budget. *(The full scorecard adds more fields — sponsor, summary,
-  actual spend, etc. — added in slices during Build.)*
-- **milestones** — live under a project (`project_id`). A title, a date, and a
-  status (done / upcoming) — this powers the scorecard's accomplishments +
-  deliverables and the 30-day window.
-- **time_entries** — daily effort. Each entry points at *both* a project and the
-  user who logged it — which is what lets us total hours per project *and* per
-  person (the FTE / resources-per-month rollup).
+### profiles
+The app-level row for each login (`id` = `auth.users.id`, `on delete cascade`).
+- `role text default 'admin'`, `CHECK (role in ('admin', 'client'))` — separates
+  the consultant (admin) from a client's read-only portal login.
+- `client_id references clients(id)` — set for client logins (which client they
+  can see); null for admins.
+- **RLS:** read-own-profile SELECT only (`auth.uid() = id`). **No insert/update
+  policies** — so a user cannot change their own `role`.
+- A `handle_new_user` trigger (SECURITY DEFINER) auto-inserts a default-admin
+  profile row on each new signup.
+
+### clients
+The consulting clients. `owner_id` points to the consultant who owns the row.
+- **RLS:** 4 per-user policies (select / insert / update / delete), each
+  `auth.uid() = owner_id`, **plus** an additive client-viewer SELECT so a portal
+  user can read their own client:
+  `id = (select client_id from profiles where id = auth.uid())`.
+
+### projects
+Live under a client (`client_id not null references clients(id) on delete
+cascade`). Holds name, status, RAG health, the executive-summary text, and
+financials.
+- `status` — `CHECK in ('not_started','active','on_hold','completed','cancelled')`,
+  default `not_started`.
+- `health` — `CHECK in ('green','amber','red')`, default `green`.
+- `resourcing` — `CHECK in ('staffed','stretched','bottlenecked')` (nullable).
+- `summary`, `asks`, `issues` — nullable free text (Block 2, Executive Summary).
+- `budget`, `actual_spend` — `numeric` (Block 4, Financials & Resources).
+- **RLS:** 4 per-user policies (`auth.uid() = owner_id`), **plus** an additive
+  client-viewer SELECT:
+  `client_id = (select client_id from profiles where id = auth.uid())`.
+
+### milestones
+Live under a project (`project_id references projects(id) on delete cascade`).
+Power the Timeline & Velocity Gantt chart (Block 3).
+- `start_date` is **NOT NULL**; `due_date` is nullable.
+- `is_done boolean` — the done/upcoming toggle (replaces an old status string).
+- **RLS:** 4 owner CRUD policies (`auth.uid() = owner_id`), **plus** a nested
+  viewer-read policy so a portal user sees milestones of their own projects:
+  `project_id in (select id from projects where client_id =
+  (select client_id from profiles where id = auth.uid()))`.
+
+### risks
+Live under a project (`project_id references projects(id) on delete cascade`).
+Power Risks & Dependencies (Block 5).
+- `likelihood` and `impact` each `CHECK in ('low','medium','high')`.
+- `mitigation` nullable.
+- **RAG severity is derived in code** (`app/risk-rag.ts`, a 3×3
+  likelihood×impact matrix), **not stored** in the table.
+- **RLS:** 4 owner CRUD policies, **plus** the same nested viewer-read shape as
+  milestones (via the risk's `project_id → projects.client_id`).
+
+---
 
 ## Relationships, one line each
-- One **user** owns many **clients**.
-- One **client** has many **projects**.
-- One **project** has many **milestones** and many **time entries**.
-- One **user** records many **time entries**.
-
-> `||` = one, `o{` = many. **PK** = unique row ID. **FK** = a pointer to another
-> table's row (the wire that makes the connection).
-
----
-
-## Deferred tables (the *Could* features)
-- **invoices / payments** — linked to a client (and/or project): amount, due date,
-  terms, paid/overdue status. Drives payment tracking + late alerts.
-- **documents** — linked to a client/project: contracts, agreements, deliverables,
-  invoices.
-
-Left out for now to keep the foundation clean; added as their own tables when we
-reach those features.
+- One **auth user** has exactly one **profile** (`profiles.id = auth.users.id`).
+- One **auth user** owns many **clients** (`clients.owner_id`).
+- One **client** is the portal target for zero-or-one **profile**
+  (`profiles.client_id`) — how a client login is scoped to one client.
+- One **client** has many **projects** (`projects.client_id`).
+- One **project** has many **milestones** and many **risks**.
+- Deleting a client cascades to its projects; deleting a project cascades to its
+  milestones and risks.
 
 ---
 
-## Note
-This is the near-term core (the MVP plus the soon-after *Should* features). It will
-live in a **new Supabase project** (kept separate from the learning DBs), with
-per-row ownership rules (RLS) so a client can only ever see their own data — set up
-in Stage 3.
+## Access model in one breath
+Admins (consultant) own their rows via `owner_id` and get full CRUD. A client
+login carries a `client_id` on its profile and gets **read-only** access, granted
+by the additive viewer SELECT policies that walk
+`profile.client_id → clients → projects → (milestones, risks)`.
+
+---
+
+## Deferred (not yet built)
+Intentional post-MVP scope per the brief's MoSCoW — these are planned *Could*
+features, not gaps in the current model:
+- **Time-logging / `time_entries`** — daily effort per project + person, to drive
+  hours totals and the FTE / resources-per-month rollup.
+- **Invoicing & payments** — amounts, due dates, terms, paid/overdue status;
+  drives payment tracking and late alerts.
+- **Documents** — contracts, agreements, deliverables, invoices linked to a
+  client/project.
+
+Each gets its own table when we reach that feature.
+
+---
+
+> ⚠️ **Migrations gap:** this schema + all RLS policies live only in Supabase, not
+> in git. Harden task.
