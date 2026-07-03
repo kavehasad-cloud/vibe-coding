@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
+import { formatCurrency } from "@/app/format";
 
 type DashboardProject = {
   id: string;
@@ -10,6 +11,8 @@ type DashboardProject = {
   health: string;
   clientId: string;
   clientName: string;
+  budget: number | null;
+  actualSpend: number | null;
 };
 
 // One shared shape for both the overdue and upcoming milestone lists — they come
@@ -67,6 +70,31 @@ function HealthBadge({ health }: { health: string }) {
   );
 }
 
+// Variance = actual − budget. Positive = over budget (bad, red); zero/negative =
+// on/under budget (good, green). Mirrors the Variance component in financials.tsx.
+function VarianceFigure({
+  budget,
+  actual,
+  showPct = false,
+}: {
+  budget: number;
+  actual: number;
+  showPct?: boolean;
+}) {
+  const diff = actual - budget;
+  const overBudget = diff > 0;
+  const magnitude = formatCurrency(Math.abs(diff));
+  // Guard divide-by-zero when budget is 0.
+  const pct = budget !== 0 ? Math.round((Math.abs(diff) / budget) * 100) : 0;
+  return (
+    <span className={overBudget ? "text-red-700" : "text-green-700"}>
+      {overBudget ? "+" : "-"}
+      {magnitude}
+      {showPct ? ` (${pct}% ${overBudget ? "over" : "under"} budget)` : ""}
+    </span>
+  );
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -93,7 +121,7 @@ export default async function DashboardPage() {
   // name via the FK join. No per-client loop.
   const { data: rows } = await supabase
     .from("projects")
-    .select("id, name, status, health, client_id, clients(name)")
+    .select("id, name, status, health, client_id, budget, actual_spend, clients(name)")
     .order("created_at");
 
   // Normalize the embedded client name — a to-one join may surface as an object
@@ -110,6 +138,8 @@ export default async function DashboardPage() {
       health: r.health as string,
       clientId: r.client_id as string,
       clientName,
+      budget: (r.budget as number | null) ?? null,
+      actualSpend: (r.actual_spend as number | null) ?? null,
     };
   });
 
@@ -130,6 +160,35 @@ export default async function DashboardPage() {
   const greenCount = live.filter((p) => p.health === "green").length;
   const amberCount = live.filter((p) => p.health === "amber").length;
   const redCount = live.filter((p) => p.health === "red").length;
+
+  // Portfolio financials (derived, no query). Basis: every project except
+  // cancelled — a cancelled project's budget is an abandoned commitment and
+  // shouldn't count toward committed spend. Nulls count as 0 in the sums.
+  const financialProjects = projects.filter((p) => p.status !== "cancelled");
+  const budgetTotal = financialProjects.reduce((s, p) => s + (p.budget ?? 0), 0);
+  const actualTotal = financialProjects.reduce(
+    (s, p) => s + (p.actualSpend ?? 0),
+    0
+  );
+  const varianceTotal = actualTotal - budgetTotal;
+  // How many in-scope projects have no budget set — so a low total isn't
+  // misread as complete.
+  const missingBudget = financialProjects.filter((p) => p.budget === null).length;
+
+  // Per-client subtotals over the same basis, alphabetized by client name.
+  const clientFinancials = new Map<
+    string,
+    { budget: number; actual: number }
+  >();
+  for (const p of financialProjects) {
+    const acc = clientFinancials.get(p.clientName) ?? { budget: 0, actual: 0 };
+    acc.budget += p.budget ?? 0;
+    acc.actual += p.actualSpend ?? 0;
+    clientFinancials.set(p.clientName, acc);
+  }
+  const financialGroups = [...clientFinancials.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0])
+  );
 
   // Open milestones due on or before today+14: one query covering both the
   // overdue (< today) and upcoming (today..+14) buckets. Filtered in SQL;
@@ -349,6 +408,88 @@ export default async function DashboardPage() {
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+
+          {/* Portfolio financials: budget vs actual across all non-cancelled projects */}
+          <section className="mt-10">
+            <h2 className="text-xl font-medium">Portfolio financials</h2>
+            {financialProjects.length === 0 ? (
+              <p className="mt-2 text-muted-foreground">
+                No active budget to report.
+              </p>
+            ) : (
+              <>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Total budget
+                    </h3>
+                    <p className="mt-1 text-sm">{formatCurrency(budgetTotal)}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Total actual
+                    </h3>
+                    <p className="mt-1 text-sm">{formatCurrency(actualTotal)}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                      Variance
+                    </h3>
+                    <p className="mt-1 text-sm">
+                      <VarianceFigure
+                        budget={budgetTotal}
+                        actual={actualTotal}
+                        showPct
+                      />
+                    </p>
+                  </div>
+                </div>
+
+                {/* Per-client breakdown */}
+                <div className="mt-6 overflow-x-auto rounded-lg border">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50 text-left text-muted-foreground">
+                        <th className="px-4 py-2 font-medium">Client</th>
+                        <th className="px-4 py-2 text-right font-medium">
+                          Budget
+                        </th>
+                        <th className="px-4 py-2 text-right font-medium">
+                          Actual
+                        </th>
+                        <th className="px-4 py-2 text-right font-medium">
+                          Variance
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {financialGroups.map(([clientName, f]) => (
+                        <tr key={clientName}>
+                          <td className="px-4 py-2 font-medium">{clientName}</td>
+                          <td className="px-4 py-2 text-right">
+                            {formatCurrency(f.budget)}
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            {formatCurrency(f.actual)}
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            <VarianceFigure budget={f.budget} actual={f.actual} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {missingBudget > 0 ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {missingBudget} of {financialProjects.length} projects have no
+                    budget set.
+                  </p>
+                ) : null}
+              </>
             )}
           </section>
 

@@ -2,9 +2,14 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 ---
+
+## 2026-07-03 — Extract formatCurrency into a shared module
+**Decision:** Moved the `formatCurrency` helper out of `app/financials.tsx` into a shared `app/format.ts`, imported by both the scorecard financials block and the dashboard's portfolio-financials section.
+**Why:** Same single-source-of-truth reasoning as the status-labels extraction (ADR 2026-07-02): currency formatting shouldn't fork across pages, or a change (e.g. USD → EUR, or decimal places) would have to be made in multiple copies and could drift.
+**Status:** Live.
 
 ## 2026-07-02 — Extract shared status/health label maps into a single module
 **Decision:** Moved the duplicated STATUS_LABELS and HEALTH_STYLES maps into one shared `app/status-labels.ts` and imported it everywhere (dashboard, portal, project detail, project-health-select) instead of adding a fourth inline copy.

@@ -7,6 +7,7 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrency } from "@/app/format";
 
 // Native <select> styled to match the Input component (mirrors risk-row).
 const selectClass =
@@ -20,15 +21,6 @@ const RESOURCING_STYLES: Record<string, string> = {
 };
 
 const initialState: CreateClientState = {};
-
-// Whole-dollar currency, e.g. "$120,000". Fractional cents are rounded away.
-function formatCurrency(value: number): string {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-}
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
