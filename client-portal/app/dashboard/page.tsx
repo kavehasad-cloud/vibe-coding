@@ -12,14 +12,17 @@ type DashboardProject = {
   clientName: string;
 };
 
-type OverdueMilestone = {
+// One shared shape for both the overdue and upcoming milestone lists — they come
+// from the same query and normalization; only the date bucket differs.
+type MilestoneItem = {
   id: string;
   name: string;
   projectId: string;
   projectName: string;
   clientId: string;
   clientName: string;
-  daysOverdue: number;
+  dueDate: string;
+  dueMs: number;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -31,13 +34,18 @@ function parseDate(date: string): Date {
   return new Date(year, month - 1, day);
 }
 
-// Local YYYY-MM-DD for today, built from local parts (not toISOString, which is
-// UTC and could roll the day). Used as the SQL overdue cutoff.
-function localTodayStr(now: Date): string {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
+// Local YYYY-MM-DD for a given date, built from local parts (not toISOString,
+// which is UTC and could roll the day). Used for the SQL date-range cutoffs.
+function localDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+// Short "Jul 10" label; mirrors formatShort in gantt-chart.tsx.
+function formatShort(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 // Health is only meaningful for live work, so only active/on_hold projects with
@@ -110,22 +118,24 @@ export default async function DashboardPage() {
     .filter(needsAttention)
     .sort((a, b) => (a.health === "red" ? 0 : 1) - (b.health === "red" ? 0 : 1));
 
-  // Overdue milestones: due before today (local) and not done. Filtered in SQL;
+  // Open milestones due on or before today+14: one query covering both the
+  // overdue (< today) and upcoming (today..+14) buckets. Filtered in SQL;
   // project + client context comes via nested embeds. RLS scopes to the owner.
   const now = new Date();
-  const todayStr = localTodayStr(now);
-  const todayMs = parseDate(todayStr).getTime();
+  const todayMs = parseDate(localDateStr(now)).getTime();
+  const plus14 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
+  const plus14Str = localDateStr(plus14);
 
   const { data: milestoneRows } = await supabase
     .from("milestones")
     .select("id, name, due_date, project_id, projects(name, client_id, clients(name))")
     .eq("is_done", false)
-    .lt("due_date", todayStr)
+    .lte("due_date", plus14Str)
     .order("due_date");
 
   // Normalize the nested project → client embeds (same object-or-array shape
   // guard as the projects query above).
-  const overdue: OverdueMilestone[] = (milestoneRows ?? []).map((r) => {
+  const milestones: MilestoneItem[] = (milestoneRows ?? []).map((r) => {
     const row = r as {
       id: string;
       name: string;
@@ -152,9 +162,15 @@ export default async function DashboardPage() {
       projectName: project?.name ?? "—",
       clientId: project?.client_id ?? "",
       clientName,
-      daysOverdue: Math.round((todayMs - parseDate(row.due_date).getTime()) / DAY_MS),
+      dueDate: row.due_date,
+      dueMs: parseDate(row.due_date).getTime(),
     };
   });
+
+  // Partition by a single comparison so the buckets can't double-count or drop
+  // the boundary: due exactly today (dueMs === todayMs) falls into upcoming.
+  const overdue = milestones.filter((m) => m.dueMs < todayMs);
+  const upcoming = milestones.filter((m) => m.dueMs >= todayMs);
 
   // Group all projects by client name for the full list (query order preserved
   // within each client; client groups sorted alphabetically).
@@ -238,16 +254,54 @@ export default async function DashboardPage() {
                               {m.projectName} · {m.clientName}
                             </p>
                           </div>
-                          <span className="shrink-0 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
-                            {m.daysOverdue} {m.daysOverdue === 1 ? "day" : "days"}{" "}
-                            overdue
-                          </span>
+                          {(() => {
+                            const days = Math.round((todayMs - m.dueMs) / DAY_MS);
+                            return (
+                              <span className="shrink-0 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+                                {days} {days === 1 ? "day" : "days"} overdue
+                              </span>
+                            );
+                          })()}
                         </li>
                       ))}
                     </ul>
                   </div>
                 ) : null}
               </div>
+            )}
+          </section>
+
+          {/* Upcoming deadlines: milestones due today through the next 14 days */}
+          <section className="mt-10">
+            <h2 className="text-xl font-medium">Upcoming deadlines</h2>
+            {upcoming.length === 0 ? (
+              <p className="mt-2 text-muted-foreground">
+                Nothing due in the next two weeks.
+              </p>
+            ) : (
+              <ul className="mt-4 divide-y rounded-lg border">
+                {upcoming.map((m) => (
+                  <li
+                    key={m.id}
+                    className="flex items-center justify-between gap-3 px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <Link
+                        href={`/clients/${m.clientId}/projects/${m.projectId}`}
+                        className="truncate font-medium hover:underline"
+                      >
+                        {m.name}
+                      </Link>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {m.projectName} · {m.clientName}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                      {formatShort(parseDate(m.dueDate))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </section>
 
