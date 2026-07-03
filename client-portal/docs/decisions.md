@@ -6,6 +6,11 @@ Last updated: 2026-07-02
 
 ---
 
+## 2026-07-02 — Extract shared status/health label maps into a single module
+**Decision:** Moved the duplicated STATUS_LABELS and HEALTH_STYLES maps into one shared `app/status-labels.ts` and imported it everywhere (dashboard, portal, project detail, project-health-select) instead of adding a fourth inline copy.
+**Why:** The maps had forked across 3–4 files; a label/color change would have to be made in every copy and could silently drift. A single source of truth means one edit, no drift. (HEALTH_OPTIONS stays local to the health `<select>` — genuinely control-specific, not a shared convention.)
+**Status:** Live.
+
 ## 2026-07-01 — Money as `numeric`, variance computed on read
 **Decision:** Store `budget`/`actual_spend` as `numeric`, and compute financial variance on read instead of storing it.
 **Why:** `numeric` is exact for currency (floats drift), and computed variance can't fall out of sync.
