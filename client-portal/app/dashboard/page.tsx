@@ -118,6 +118,19 @@ export default async function DashboardPage() {
     .filter(needsAttention)
     .sort((a, b) => (a.health === "red" ? 0 : 1) - (b.health === "red" ? 0 : 1));
 
+  // Portfolio summary counts (derived, no query). Health is only meaningful for
+  // live work, so the green/amber/red mix is tallied over active+on_hold — it
+  // sums exactly to the "live" figure. "active" is the true in-flight count.
+  const total = projects.length;
+  const activeCount = projects.filter((p) => p.status === "active").length;
+  const live = projects.filter(
+    (p) => p.status === "active" || p.status === "on_hold"
+  );
+  const liveCount = live.length;
+  const greenCount = live.filter((p) => p.health === "green").length;
+  const amberCount = live.filter((p) => p.health === "amber").length;
+  const redCount = live.filter((p) => p.health === "red").length;
+
   // Open milestones due on or before today+14: one query covering both the
   // overdue (< today) and upcoming (today..+14) buckets. Filtered in SQL;
   // project + client context comes via nested embeds. RLS scopes to the owner.
@@ -199,6 +212,40 @@ export default async function DashboardPage() {
         <p className="mt-8 text-muted-foreground">No projects yet</p>
       ) : (
         <>
+          {/* Portfolio summary strip: at-a-glance counts across all projects */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span>
+              <span className="font-medium">{total}</span>{" "}
+              <span className="text-muted-foreground">projects</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span>
+              <span className="font-medium">{liveCount}</span>{" "}
+              <span className="text-muted-foreground">live</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span>
+              <span className="font-medium">{activeCount}</span>{" "}
+              <span className="text-muted-foreground">active</span>
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-green-500" />
+              <span className="font-medium">{greenCount}</span>{" "}
+              <span className="text-muted-foreground">green</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-amber-500" />
+              <span className="font-medium">{amberCount}</span>{" "}
+              <span className="text-muted-foreground">amber</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-red-500" />
+              <span className="font-medium">{redCount}</span>{" "}
+              <span className="text-muted-foreground">red</span>
+            </span>
+          </div>
+
           {/* Needs attention */}
           <section className="mt-8">
             <h2 className="text-xl font-medium">Needs attention</h2>
