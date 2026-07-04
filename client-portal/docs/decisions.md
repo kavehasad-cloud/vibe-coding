@@ -2,9 +2,14 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ---
+
+## 2026-07-04 — Extract shared date helpers into `app/format.ts`
+**Decision:** Moved the shared date helpers (`parseDate`, `localDateStr`, `formatShort`, `todayMidnight`, `formatFull`) into `app/format.ts` as the single source of truth.
+**Why:** These helpers (esp. the local-parts UTC-shift guard) were triplicated across `dashboard/page.tsx`, `gantt-chart.tsx`, and `milestone-row.tsx`, each commented as "mirrors the others" — exactly the drift risk ADRs #8 and #9 were created to prevent. `format.ts` already existed as the home for shared formatting. Note: `formatFull` was kept distinct from `formatShort` because milestone-row's date renders WITH the year; collapsing them would have silently dropped it.
+**Status:** Done (this slice).
 
 ## 2026-07-03 — Extract formatCurrency into a shared module
 **Decision:** Moved the `formatCurrency` helper out of `app/financials.tsx` into a shared `app/format.ts`, imported by both the scorecard financials block and the dashboard's portfolio-financials section.
