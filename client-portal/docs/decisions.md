@@ -6,6 +6,11 @@ Last updated: 2026-07-04
 
 ---
 
+## 2026-07-04 — /dashboard is the home; retire the standalone clients list
+**Decision:** Made `/dashboard` the application home. Retired the standalone clients list page (`/` now redirects to `/dashboard`). Client management (add/edit/delete) moved onto the dashboard, which is now client-first: one box per client with that client's project status, financials, and a filtered project list (active/on-hold/not-started starting within ~2 months, or undated). Boxes are driven by the clients query so zero-project clients still appear and are manageable. Login/signup now redirect to `/dashboard`.
+**Why:** The old split (a flat clients list at `/` plus a separate global-sections dashboard) was redundant and the dashboard had grown too dense. A per-client, client-first home matches how the consultant actually reads the portfolio (by client), naturally trims the global sections (health/financials become per-box), and removes a whole page. Client-delete relies on the existing DB ON DELETE CASCADE (client→projects→milestones→risks), guarded by a native `confirm()` that states the blast radius.
+**Status:** Done.
+
 ## 2026-07-04 — Extract shared date helpers into `app/format.ts`
 **Decision:** Moved the shared date helpers (`parseDate`, `localDateStr`, `formatShort`, `todayMidnight`, `formatFull`) into `app/format.ts` as the single source of truth.
 **Why:** These helpers (esp. the local-parts UTC-shift guard) were triplicated across `dashboard/page.tsx`, `gantt-chart.tsx`, and `milestone-row.tsx`, each commented as "mirrors the others" — exactly the drift risk ADRs #8 and #9 were created to prevent. `format.ts` already existed as the home for shared formatting. Note: `formatFull` was kept distinct from `formatShort` because milestone-row's date renders WITH the year; collapsing them would have silently dropped it.

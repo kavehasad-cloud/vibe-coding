@@ -1,6 +1,6 @@
 # Client Portal — Data Model
 
-*Last updated: 2026-07-02 · Status: reflects live schema through Day 17.*
+*Last updated: 2026-07-04 · Status: reflects live schema through Day 19.*
 
 The blueprint of what the app actually stores and how it connects.
 *(GitHub renders the diagram below automatically.)*
@@ -161,6 +161,16 @@ Admins (consultant) own their rows via `owner_id` and get full CRUD. A client
 login carries a `client_id` on its profile and gets **read-only** access, granted
 by the additive viewer SELECT policies that walk
 `profile.client_id → clients → projects → (milestones, risks)`.
+
+## Routing model
+- `/` redirects to `/dashboard` — there is no longer a standalone clients list page.
+- `/dashboard` is the **admin home** and hosts client CRUD (add / edit / delete),
+  rendered client-first as one box per client. Login and signup land here.
+- `/portal` is the client login's read-only home.
+- ⚠️ **Destructive behavior:** deleting a client from the dashboard cascades in the
+  DB (`ON DELETE CASCADE`) to that client's **projects**, and each project to its
+  **milestones** and **risks** — all removed in one action. The UI guards this with
+  a native `confirm()` that names the number of projects that will be destroyed.
 
 ---
 
