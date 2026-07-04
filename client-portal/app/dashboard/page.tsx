@@ -1,13 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
-import {
-  formatCurrency,
-  parseDate,
-  localDateStr,
-  formatShort,
-} from "@/app/format";
+import { STATUS_LABELS } from "@/app/status-labels";
+import { formatCurrency, parseDate, todayMidnight } from "@/app/format";
 
 type DashboardProject = {
   id: string;
@@ -20,37 +15,72 @@ type DashboardProject = {
   actualSpend: number | null;
 };
 
-// One shared shape for both the overdue and upcoming milestone lists — they come
-// from the same query and normalization; only the date bucket differs.
-type MilestoneItem = {
-  id: string;
-  name: string;
-  projectId: string;
-  projectName: string;
-  clientId: string;
-  clientName: string;
-  dueDate: string;
-  dueMs: number;
+// Solid traffic-light dot fills, keyed by RAG health. Distinct from HEALTH_STYLES
+// (bordered badges); this is the dot variant already used by the summary strip.
+const HEALTH_DOT: Record<string, string> = {
+  green: "bg-green-500",
+  amber: "bg-amber-500",
+  red: "bg-red-500",
 };
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+// The project list only surfaces work that is live or about to start; completed
+// and cancelled projects are dropped. Rank drives the in-box sort order.
+const LISTED_STATUS_RANK: Record<string, number> = {
+  active: 0,
+  on_hold: 1,
+  not_started: 2,
+};
 
-// Health is only meaningful for live work, so only active/on_hold projects with
-// a red/amber badge count as needing attention (matches the project detail page).
-function needsAttention(p: DashboardProject): boolean {
-  const isLive = p.status === "active" || p.status === "on_hold";
-  return isLive && (p.health === "red" || p.health === "amber");
+// "Live" = in-flight work. Health is only meaningful for live projects, so the
+// green/amber/red mix is always tallied over this set (and sums to its size).
+function isLive(p: DashboardProject): boolean {
+  return p.status === "active" || p.status === "on_hold";
 }
 
-function HealthBadge({ health }: { health: string }) {
+// At-a-glance counts for a set of projects: total · live · active · RAG mix.
+// Reused for both the global strip (all projects) and each per-client box. An
+// empty live set renders 0/0/0 — the filters below never divide, so no NaN.
+function StatusStrip({ projects }: { projects: DashboardProject[] }) {
+  const total = projects.length;
+  const activeCount = projects.filter((p) => p.status === "active").length;
+  const live = projects.filter(isLive);
+  const greenCount = live.filter((p) => p.health === "green").length;
+  const amberCount = live.filter((p) => p.health === "amber").length;
+  const redCount = live.filter((p) => p.health === "red").length;
+
   return (
-    <span
-      className={`shrink-0 rounded-md border px-2 py-1 text-xs capitalize ${
-        HEALTH_STYLES[health] ?? ""
-      }`}
-    >
-      {health}
-    </span>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <span>
+        <span className="font-medium">{total}</span>{" "}
+        <span className="text-muted-foreground">projects</span>
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span>
+        <span className="font-medium">{live.length}</span>{" "}
+        <span className="text-muted-foreground">live</span>
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span>
+        <span className="font-medium">{activeCount}</span>{" "}
+        <span className="text-muted-foreground">active</span>
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span className="flex items-center gap-1.5">
+        <span className={`size-2 rounded-full ${HEALTH_DOT.green}`} />
+        <span className="font-medium">{greenCount}</span>{" "}
+        <span className="text-muted-foreground">green</span>
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className={`size-2 rounded-full ${HEALTH_DOT.amber}`} />
+        <span className="font-medium">{amberCount}</span>{" "}
+        <span className="text-muted-foreground">amber</span>
+      </span>
+      <span className="flex items-center gap-1.5">
+        <span className={`size-2 rounded-full ${HEALTH_DOT.red}`} />
+        <span className="font-medium">{redCount}</span>{" "}
+        <span className="text-muted-foreground">red</span>
+      </span>
+    </div>
   );
 }
 
@@ -76,6 +106,32 @@ function VarianceFigure({
       {magnitude}
       {showPct ? ` (${pct}% ${overBudget ? "over" : "under"} budget)` : ""}
     </span>
+  );
+}
+
+// Budget/actual over the non-cancelled projects only — a cancelled project's
+// budget is an abandoned commitment. Nulls count as 0.
+function ClientFinancials({ projects }: { projects: DashboardProject[] }) {
+  const inScope = projects.filter((p) => p.status !== "cancelled");
+  const budget = inScope.reduce((s, p) => s + (p.budget ?? 0), 0);
+  const actual = inScope.reduce((s, p) => s + (p.actualSpend ?? 0), 0);
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <span>
+        <span className="text-muted-foreground">Budget</span>{" "}
+        <span className="font-medium">{formatCurrency(budget)}</span>
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span>
+        <span className="text-muted-foreground">Actual</span>{" "}
+        <span className="font-medium">{formatCurrency(actual)}</span>
+      </span>
+      <span className="text-muted-foreground">·</span>
+      <span>
+        <span className="text-muted-foreground">Variance</span>{" "}
+        <VarianceFigure budget={budget} actual={actual} showPct />
+      </span>
+    </div>
   );
 }
 
@@ -127,118 +183,90 @@ export default async function DashboardPage() {
     };
   });
 
-  // Attention: red before amber so the worst surfaces first.
-  const attention = projects
-    .filter(needsAttention)
-    .sort((a, b) => (a.health === "red" ? 0 : 1) - (b.health === "red" ? 0 : 1));
-
-  // Portfolio summary counts (derived, no query). Health is only meaningful for
-  // live work, so the green/amber/red mix is tallied over active+on_hold — it
-  // sums exactly to the "live" figure. "active" is the true in-flight count.
-  const total = projects.length;
-  const activeCount = projects.filter((p) => p.status === "active").length;
-  const live = projects.filter(
-    (p) => p.status === "active" || p.status === "on_hold"
-  );
-  const liveCount = live.length;
-  const greenCount = live.filter((p) => p.health === "green").length;
-  const amberCount = live.filter((p) => p.health === "amber").length;
-  const redCount = live.filter((p) => p.health === "red").length;
-
-  // Portfolio financials (derived, no query). Basis: every project except
-  // cancelled — a cancelled project's budget is an abandoned commitment and
-  // shouldn't count toward committed spend. Nulls count as 0 in the sums.
-  const financialProjects = projects.filter((p) => p.status !== "cancelled");
-  const budgetTotal = financialProjects.reduce((s, p) => s + (p.budget ?? 0), 0);
-  const actualTotal = financialProjects.reduce(
-    (s, p) => s + (p.actualSpend ?? 0),
-    0
-  );
-  const varianceTotal = actualTotal - budgetTotal;
-  // How many in-scope projects have no budget set — so a low total isn't
-  // misread as complete.
-  const missingBudget = financialProjects.filter((p) => p.budget === null).length;
-
-  // Per-client subtotals over the same basis, alphabetized by client name.
-  const clientFinancials = new Map<
-    string,
-    { budget: number; actual: number }
-  >();
-  for (const p of financialProjects) {
-    const acc = clientFinancials.get(p.clientName) ?? { budget: 0, actual: 0 };
-    acc.budget += p.budget ?? 0;
-    acc.actual += p.actualSpend ?? 0;
-    clientFinancials.set(p.clientName, acc);
-  }
-  const financialGroups = [...clientFinancials.entries()].sort((a, b) =>
-    a[0].localeCompare(b[0])
-  );
-
-  // Open milestones due on or before today+14: one query covering both the
-  // overdue (< today) and upcoming (today..+14) buckets. Filtered in SQL;
-  // project + client context comes via nested embeds. RLS scopes to the owner.
-  const now = new Date();
-  const todayMs = parseDate(localDateStr(now)).getTime();
-  const plus14 = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14);
-  const plus14Str = localDateStr(plus14);
-
+  // One broad milestone query (RLS scopes to owner): just what's needed to find
+  // each project's earliest start. No date/status filter — we bucket in JS.
   const { data: milestoneRows } = await supabase
     .from("milestones")
-    .select("id, name, due_date, project_id, projects(name, client_id, clients(name))")
-    .eq("is_done", false)
-    .lte("due_date", plus14Str)
-    .order("due_date");
+    .select("project_id, start_date");
 
-  // Normalize the nested project → client embeds (same object-or-array shape
-  // guard as the projects query above).
-  const milestones: MilestoneItem[] = (milestoneRows ?? []).map((r) => {
-    const row = r as {
-      id: string;
-      name: string;
-      due_date: string;
-      project_id: string;
-      projects: unknown;
-    };
-    const projectField = Array.isArray(row.projects)
-      ? row.projects[0]
-      : row.projects;
-    const project = (projectField as {
-      name?: string;
-      client_id?: string;
-      clients?: unknown;
-    } | null);
-    const clientField = project?.clients;
-    const clientName = Array.isArray(clientField)
-      ? (clientField[0] as { name?: string } | undefined)?.name ?? "—"
-      : (clientField as { name?: string } | null)?.name ?? "—";
-    return {
-      id: row.id,
-      name: row.name,
-      projectId: row.project_id,
-      projectName: project?.name ?? "—",
-      clientId: project?.client_id ?? "",
-      clientName,
-      dueDate: row.due_date,
-      dueMs: parseDate(row.due_date).getTime(),
-    };
-  });
-
-  // Partition by a single comparison so the buckets can't double-count or drop
-  // the boundary: due exactly today (dueMs === todayMs) falls into upcoming.
-  const overdue = milestones.filter((m) => m.dueMs < todayMs);
-  const upcoming = milestones.filter((m) => m.dueMs >= todayMs);
-
-  // Group all projects by client name for the full list (query order preserved
-  // within each client; client groups sorted alphabetically).
-  const byClient = new Map<string, DashboardProject[]>();
-  for (const p of projects) {
-    const list = byClient.get(p.clientName) ?? [];
-    list.push(p);
-    byClient.set(p.clientName, list);
+  // earliestStart per project = min of its milestone start_dates. A project
+  // absent from this map has no dated milestones (undated → always listed).
+  const earliestStartByProject = new Map<string, Date>();
+  for (const row of milestoneRows ?? []) {
+    const m = row as { project_id: string; start_date: string | null };
+    if (!m.start_date) continue;
+    const start = parseDate(m.start_date);
+    const current = earliestStartByProject.get(m.project_id);
+    if (!current || start.getTime() < current.getTime()) {
+      earliestStartByProject.set(m.project_id, start);
+    }
   }
-  const clientGroups = [...byClient.entries()].sort((a, b) =>
-    a[0].localeCompare(b[0])
+
+  // Relevance horizon: a listed project must start on or before today + 2 months
+  // (or be undated). todayMidnight compares cleanly against parsed date-only values.
+  const today = todayMidnight();
+  const horizon = new Date(
+    today.getFullYear(),
+    today.getMonth() + 2,
+    today.getDate()
   );
+  const horizonMs = horizon.getTime();
+
+  // Group projects by client_id (NOT name — two clients could share a name),
+  // keeping a clientId → name lookup for each box header.
+  const byClient = new Map<string, DashboardProject[]>();
+  const clientName = new Map<string, string>();
+  for (const p of projects) {
+    const list = byClient.get(p.clientId) ?? [];
+    list.push(p);
+    byClient.set(p.clientId, list);
+    clientName.set(p.clientId, p.clientName);
+  }
+
+  // A project is listed if it's live/starting soon: status in the listed set AND
+  // (undated OR earliest start within the horizon).
+  function isListed(p: DashboardProject): boolean {
+    if (!(p.status in LISTED_STATUS_RANK)) return false;
+    const start = earliestStartByProject.get(p.id);
+    if (!start) return true;
+    return start.getTime() <= horizonMs;
+  }
+
+  // Within a box: active → on_hold → not_started, then earliest start ascending
+  // (undated last in its status group), then name A→Z for a stable tiebreak.
+  function compareListed(a: DashboardProject, b: DashboardProject): number {
+    const rank = LISTED_STATUS_RANK[a.status] - LISTED_STATUS_RANK[b.status];
+    if (rank !== 0) return rank;
+    const sa = earliestStartByProject.get(a.id);
+    const sb = earliestStartByProject.get(b.id);
+    if (sa && sb && sa.getTime() !== sb.getTime()) {
+      return sa.getTime() - sb.getTime();
+    }
+    if (sa && !sb) return -1; // dated before undated
+    if (!sa && sb) return 1;
+    return a.name.localeCompare(b.name);
+  }
+
+  // Box order: clients with a red live project first, then amber-live, then the
+  // rest; alphabetical by client name within each tier for a stable order.
+  function boxPriority(clientProjects: DashboardProject[]): number {
+    const live = clientProjects.filter(isLive);
+    if (live.some((p) => p.health === "red")) return 0;
+    if (live.some((p) => p.health === "amber")) return 1;
+    return 2;
+  }
+
+  const clientBoxes = [...byClient.entries()]
+    .map(([clientId, clientProjects]) => ({
+      clientId,
+      name: clientName.get(clientId) ?? "—",
+      projects: clientProjects,
+      listed: clientProjects.filter(isListed).sort(compareListed),
+      priority: boxPriority(clientProjects),
+    }))
+    .sort(
+      (a, b) => a.priority - b.priority || a.name.localeCompare(b.name)
+    );
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -252,273 +280,74 @@ export default async function DashboardPage() {
       </p>
 
       {projects.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">No projects yet</p>
+        <p className="mt-8 text-muted-foreground">
+          No clients or projects yet.
+        </p>
       ) : (
         <>
-          {/* Portfolio summary strip: at-a-glance counts across all projects */}
-          <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            <span>
-              <span className="font-medium">{total}</span>{" "}
-              <span className="text-muted-foreground">projects</span>
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span>
-              <span className="font-medium">{liveCount}</span>{" "}
-              <span className="text-muted-foreground">live</span>
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span>
-              <span className="font-medium">{activeCount}</span>{" "}
-              <span className="text-muted-foreground">active</span>
-            </span>
-            <span className="text-muted-foreground">·</span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-green-500" />
-              <span className="font-medium">{greenCount}</span>{" "}
-              <span className="text-muted-foreground">green</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-amber-500" />
-              <span className="font-medium">{amberCount}</span>{" "}
-              <span className="text-muted-foreground">amber</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-red-500" />
-              <span className="font-medium">{redCount}</span>{" "}
-              <span className="text-muted-foreground">red</span>
-            </span>
+          {/* Global summary strip: at-a-glance counts across all projects */}
+          <div className="mt-6">
+            <StatusStrip projects={projects} />
           </div>
 
-          {/* Needs attention */}
-          <section className="mt-8">
-            <h2 className="text-xl font-medium">Needs attention</h2>
-            {attention.length === 0 && overdue.length === 0 ? (
-              <p className="mt-2 text-muted-foreground">
-                All active projects are green — nothing needs attention.
-              </p>
-            ) : (
-              <div className="mt-4 space-y-6">
-                {attention.length > 0 ? (
-                  <ul className="divide-y rounded-lg border">
-                    {attention.map((p) => (
+          {/* One box per client */}
+          <div className="mt-8 space-y-6">
+            {clientBoxes.map((box) => (
+              <section
+                key={box.clientId}
+                className="rounded-lg border p-4"
+              >
+                <Link
+                  href={`/clients/${box.clientId}`}
+                  className="text-lg font-medium hover:underline"
+                >
+                  {box.name}
+                </Link>
+
+                {/* Per-client status strip */}
+                <div className="mt-2">
+                  <StatusStrip projects={box.projects} />
+                </div>
+
+                {/* Per-client financials */}
+                <div className="mt-1">
+                  <ClientFinancials projects={box.projects} />
+                </div>
+
+                {/* Relevant projects */}
+                {box.listed.length === 0 ? (
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    No active projects in the next 2 months
+                  </p>
+                ) : (
+                  <ul className="mt-3 divide-y rounded-lg border">
+                    {box.listed.map((p) => (
                       <li
                         key={p.id}
-                        className="flex items-center justify-between gap-3 px-4 py-3"
+                        className="flex items-center gap-3 px-4 py-3"
                       >
-                        <div className="min-w-0">
-                          <Link
-                            href={`/clients/${p.clientId}/projects/${p.id}`}
-                            className="truncate font-medium hover:underline"
-                          >
-                            {p.name}
-                          </Link>
-                          <p className="truncate text-sm text-muted-foreground">
-                            {p.clientName} · {STATUS_LABELS[p.status] ?? p.status}
-                          </p>
-                        </div>
-                        <HealthBadge health={p.health} />
+                        <span
+                          aria-hidden
+                          className={`size-2 shrink-0 rounded-full ${
+                            HEALTH_DOT[p.health] ?? "bg-muted-foreground"
+                          }`}
+                        />
+                        <Link
+                          href={`/clients/${box.clientId}/projects/${p.id}`}
+                          className="min-w-0 flex-1 truncate font-medium hover:underline"
+                        >
+                          {p.name}
+                        </Link>
+                        <span className="shrink-0 text-sm text-muted-foreground">
+                          {STATUS_LABELS[p.status] ?? p.status}
+                        </span>
                       </li>
                     ))}
                   </ul>
-                ) : null}
-
-                {overdue.length > 0 ? (
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Overdue milestones
-                    </h3>
-                    <ul className="mt-2 divide-y rounded-lg border">
-                      {overdue.map((m) => (
-                        <li
-                          key={m.id}
-                          className="flex items-center justify-between gap-3 px-4 py-3"
-                        >
-                          <div className="min-w-0">
-                            <Link
-                              href={`/clients/${m.clientId}/projects/${m.projectId}`}
-                              className="truncate font-medium hover:underline"
-                            >
-                              {m.name}
-                            </Link>
-                            <p className="truncate text-sm text-muted-foreground">
-                              {m.projectName} · {m.clientName}
-                            </p>
-                          </div>
-                          {(() => {
-                            const days = Math.round((todayMs - m.dueMs) / DAY_MS);
-                            return (
-                              <span className="shrink-0 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
-                                {days} {days === 1 ? "day" : "days"} overdue
-                              </span>
-                            );
-                          })()}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </section>
-
-          {/* Upcoming deadlines: milestones due today through the next 14 days */}
-          <section className="mt-10">
-            <h2 className="text-xl font-medium">Upcoming deadlines</h2>
-            {upcoming.length === 0 ? (
-              <p className="mt-2 text-muted-foreground">
-                Nothing due in the next two weeks.
-              </p>
-            ) : (
-              <ul className="mt-4 divide-y rounded-lg border">
-                {upcoming.map((m) => (
-                  <li
-                    key={m.id}
-                    className="flex items-center justify-between gap-3 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <Link
-                        href={`/clients/${m.clientId}/projects/${m.projectId}`}
-                        className="truncate font-medium hover:underline"
-                      >
-                        {m.name}
-                      </Link>
-                      <p className="truncate text-sm text-muted-foreground">
-                        {m.projectName} · {m.clientName}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-700">
-                      {formatShort(parseDate(m.dueDate))}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          {/* Portfolio financials: budget vs actual across all non-cancelled projects */}
-          <section className="mt-10">
-            <h2 className="text-xl font-medium">Portfolio financials</h2>
-            {financialProjects.length === 0 ? (
-              <p className="mt-2 text-muted-foreground">
-                No active budget to report.
-              </p>
-            ) : (
-              <>
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Total budget
-                    </h3>
-                    <p className="mt-1 text-sm">{formatCurrency(budgetTotal)}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Total actual
-                    </h3>
-                    <p className="mt-1 text-sm">{formatCurrency(actualTotal)}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Variance
-                    </h3>
-                    <p className="mt-1 text-sm">
-                      <VarianceFigure
-                        budget={budgetTotal}
-                        actual={actualTotal}
-                        showPct
-                      />
-                    </p>
-                  </div>
-                </div>
-
-                {/* Per-client breakdown */}
-                <div className="mt-6 overflow-x-auto rounded-lg border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-                        <th className="px-4 py-2 font-medium">Client</th>
-                        <th className="px-4 py-2 text-right font-medium">
-                          Budget
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium">
-                          Actual
-                        </th>
-                        <th className="px-4 py-2 text-right font-medium">
-                          Variance
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {financialGroups.map(([clientName, f]) => (
-                        <tr key={clientName}>
-                          <td className="px-4 py-2 font-medium">{clientName}</td>
-                          <td className="px-4 py-2 text-right">
-                            {formatCurrency(f.budget)}
-                          </td>
-                          <td className="px-4 py-2 text-right">
-                            {formatCurrency(f.actual)}
-                          </td>
-                          <td className="px-4 py-2 text-right">
-                            <VarianceFigure budget={f.budget} actual={f.actual} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {missingBudget > 0 ? (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {missingBudget} of {financialProjects.length} projects have no
-                    budget set.
-                  </p>
-                ) : null}
-              </>
-            )}
-          </section>
-
-          {/* All projects, grouped by client */}
-          <section className="mt-10">
-            <h2 className="text-xl font-medium">All projects</h2>
-            <div className="mt-4 space-y-6">
-              {clientGroups.map(([clientName, clientProjects]) => (
-                <div key={clientName}>
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    {clientName}
-                  </h3>
-                  <ul className="mt-2 divide-y rounded-lg border">
-                    {clientProjects.map((p) => {
-                      const showHealth =
-                        p.status === "active" || p.status === "on_hold";
-                      return (
-                        <li
-                          key={p.id}
-                          className="flex items-center justify-between gap-3 px-4 py-3"
-                        >
-                          <Link
-                            href={`/clients/${p.clientId}/projects/${p.id}`}
-                            className="min-w-0 truncate font-medium hover:underline"
-                          >
-                            {p.name}
-                          </Link>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              {STATUS_LABELS[p.status] ?? p.status}
-                            </span>
-                            {showHealth ? (
-                              <HealthBadge health={p.health} />
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
+                )}
+              </section>
+            ))}
+          </div>
         </>
       )}
     </main>
