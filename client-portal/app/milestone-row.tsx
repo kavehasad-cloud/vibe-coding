@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toggleMilestoneAction, deleteMilestoneAction } from "./actions";
 import { Button } from "@/components/ui/button";
+import { formatFull } from "@/app/format";
 
 type Milestone = {
   id: string;
@@ -12,25 +13,14 @@ type Milestone = {
   is_done: boolean;
 };
 
-// Dates are date-only strings (YYYY-MM-DD). Format from their parts so a
-// UTC-midnight parse can't shift them a day in the local timezone.
-function formatDate(date: string): string {
-  const [year, month, day] = date.split("-").map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 // Adaptive range: "start → due" when both exist, otherwise whichever one does.
 function formatDateRange(
   start: string | null,
   due: string | null
 ): string | null {
-  if (start && due) return `${formatDate(start)} → ${formatDate(due)}`;
-  if (start) return formatDate(start);
-  if (due) return formatDate(due);
+  if (start && due) return `${formatFull(start)} → ${formatFull(due)}`;
+  if (start) return formatFull(start);
+  if (due) return formatFull(due);
   return null;
 }
 

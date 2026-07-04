@@ -9,6 +9,7 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { parseDate, formatShort, todayMidnight } from "@/app/format";
 
 type Task = {
   id: string;
@@ -21,24 +22,6 @@ type Task = {
 const DAY_MS = 24 * 60 * 60 * 1000;
 const RANGE_PAD_DAYS = 3;
 const NAME_COL = "w-80 shrink-0";
-
-// Date-only strings (YYYY-MM-DD) parsed from their parts into a LOCAL midnight
-// Date, so a UTC parse can't shift the day in the local timezone. Mirrors the
-// approach in milestone-row.tsx.
-function parseDate(date: string): Date {
-  const [year, month, day] = date.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatShort(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
-// Today at local midnight, so it compares cleanly against parsed date-only values.
-function todayMidnight(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
 
 const initialState: CreateMilestoneState = {};
 

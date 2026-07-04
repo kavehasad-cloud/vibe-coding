@@ -2,7 +2,12 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
-import { formatCurrency } from "@/app/format";
+import {
+  formatCurrency,
+  parseDate,
+  localDateStr,
+  formatShort,
+} from "@/app/format";
 
 type DashboardProject = {
   id: string;
@@ -29,27 +34,6 @@ type MilestoneItem = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-// Date-only strings (YYYY-MM-DD) parsed from their parts into a LOCAL midnight
-// Date, so a UTC parse can't shift the day. Mirrors gantt-chart.tsx / milestone-row.tsx.
-function parseDate(date: string): Date {
-  const [year, month, day] = date.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-// Local YYYY-MM-DD for a given date, built from local parts (not toISOString,
-// which is UTC and could roll the day). Used for the SQL date-range cutoffs.
-function localDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-// Short "Jul 10" label; mirrors formatShort in gantt-chart.tsx.
-function formatShort(date: Date): string {
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
 
 // Health is only meaningful for live work, so only active/on_hold projects with
 // a red/amber badge count as needing attention (matches the project detail page).
