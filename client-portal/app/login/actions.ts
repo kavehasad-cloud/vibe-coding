@@ -18,7 +18,7 @@ export async function login(
   if (error) return { error: error.message };
 
   // redirect() throws internally, so it must live outside any try/catch.
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function signup(
@@ -38,5 +38,5 @@ export async function signup(
   // first, so this redirect will bounce back to /login. For smooth local
   // testing, turn it off: Supabase dashboard → Authentication → Sign In / Up
   // → Email → disable "Confirm email".
-  redirect("/");
+  redirect("/dashboard");
 }

@@ -57,7 +57,7 @@ export async function createClientAction(
     return { error: error.message };
   }
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -89,7 +89,7 @@ export async function updateClientAction(
     return { error: error.message };
   }
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -487,7 +487,7 @@ export async function deleteClientAction(formData: FormData) {
     return;
   }
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
 }
 
 const RISK_LEVELS = ["low", "medium", "high"] as const;

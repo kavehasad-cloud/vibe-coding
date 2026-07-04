@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { STATUS_LABELS } from "@/app/status-labels";
 import { formatCurrency, parseDate, todayMidnight } from "@/app/format";
+import { NewClientForm } from "@/app/new-client-form";
+import { ClientBoxControls } from "@/app/client-box-controls";
+import { Button } from "@/components/ui/button";
 
 type DashboardProject = {
   id: string;
@@ -10,9 +13,14 @@ type DashboardProject = {
   status: string;
   health: string;
   clientId: string;
-  clientName: string;
   budget: number | null;
   actualSpend: number | null;
+};
+
+type ClientRecord = {
+  id: string;
+  name: string;
+  contactEmail: string | null;
 };
 
 // Solid traffic-light dot fills, keyed by RAG health. Distinct from HEALTH_STYLES
@@ -135,6 +143,13 @@ function ClientFinancials({ projects }: { projects: DashboardProject[] }) {
   );
 }
 
+async function logout() {
+  "use server";
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
 
@@ -157,31 +172,36 @@ export default async function DashboardPage() {
     redirect("/portal");
   }
 
-  // One query: every project for this owner (RLS scopes to owner) + its client
-  // name via the FK join. No per-client loop.
+  // Every client for this owner (RLS scopes to owner). Boxes are driven by this
+  // list, not by the projects query, so a client with zero projects still gets a
+  // (manageable) box.
+  const { data: clientRows } = await supabase
+    .from("clients")
+    .select("id, name, contact_email")
+    .order("name");
+
+  const clients: ClientRecord[] = (clientRows ?? []).map((c) => ({
+    id: c.id as string,
+    name: c.name as string,
+    contactEmail: (c.contact_email as string | null) ?? null,
+  }));
+
+  // Every project for this owner (RLS scopes to owner). Grouped by client_id
+  // below; client names come from the clients query above.
   const { data: rows } = await supabase
     .from("projects")
-    .select("id, name, status, health, client_id, budget, actual_spend, clients(name)")
+    .select("id, name, status, health, client_id, budget, actual_spend")
     .order("created_at");
 
-  // Normalize the embedded client name — a to-one join may surface as an object
-  // or a single-element array depending on type inference.
-  const projects: DashboardProject[] = (rows ?? []).map((r) => {
-    const clientField = (r as { clients: unknown }).clients;
-    const clientName = Array.isArray(clientField)
-      ? (clientField[0] as { name?: string } | undefined)?.name ?? "—"
-      : (clientField as { name?: string } | null)?.name ?? "—";
-    return {
-      id: r.id as string,
-      name: r.name as string,
-      status: r.status as string,
-      health: r.health as string,
-      clientId: r.client_id as string,
-      clientName,
-      budget: (r.budget as number | null) ?? null,
-      actualSpend: (r.actual_spend as number | null) ?? null,
-    };
-  });
+  const projects: DashboardProject[] = (rows ?? []).map((r) => ({
+    id: r.id as string,
+    name: r.name as string,
+    status: r.status as string,
+    health: r.health as string,
+    clientId: r.client_id as string,
+    budget: (r.budget as number | null) ?? null,
+    actualSpend: (r.actual_spend as number | null) ?? null,
+  }));
 
   // One broad milestone query (RLS scopes to owner): just what's needed to find
   // each project's earliest start. No date/status filter — we bucket in JS.
@@ -212,15 +232,12 @@ export default async function DashboardPage() {
   );
   const horizonMs = horizon.getTime();
 
-  // Group projects by client_id (NOT name — two clients could share a name),
-  // keeping a clientId → name lookup for each box header.
+  // Group projects by client_id.
   const byClient = new Map<string, DashboardProject[]>();
-  const clientName = new Map<string, string>();
   for (const p of projects) {
     const list = byClient.get(p.clientId) ?? [];
     list.push(p);
     byClient.set(p.clientId, list);
-    clientName.set(p.clientId, p.clientName);
   }
 
   // A project is listed if it's live/starting soon: status in the listed set AND
@@ -256,33 +273,39 @@ export default async function DashboardPage() {
     return 2;
   }
 
-  const clientBoxes = [...byClient.entries()]
-    .map(([clientId, clientProjects]) => ({
-      clientId,
-      name: clientName.get(clientId) ?? "—",
-      projects: clientProjects,
-      listed: clientProjects.filter(isListed).sort(compareListed),
-      priority: boxPriority(clientProjects),
-    }))
-    .sort(
-      (a, b) => a.priority - b.priority || a.name.localeCompare(b.name)
-    );
+  // One box per client (from the clients list, so zero-project clients appear).
+  const clientBoxes = clients
+    .map((c) => {
+      const clientProjects = byClient.get(c.id) ?? [];
+      return {
+        clientId: c.id,
+        name: c.name,
+        contactEmail: c.contactEmail,
+        projects: clientProjects,
+        listed: clientProjects.filter(isListed).sort(compareListed),
+        priority: boxPriority(clientProjects),
+      };
+    })
+    .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        ← Back to clients
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-muted-foreground">
+            Roll-up across all clients and projects.
+          </p>
+        </div>
+        <form action={logout}>
+          <Button type="submit" variant="outline" size="sm">
+            Log out
+          </Button>
+        </form>
+      </div>
 
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">Dashboard</h1>
-      <p className="mt-1 text-muted-foreground">
-        Roll-up across all clients and projects.
-      </p>
-
-      {projects.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">
-          No clients or projects yet.
-        </p>
+      {clients.length === 0 ? (
+        <p className="mt-8 text-muted-foreground">No clients yet</p>
       ) : (
         <>
           {/* Global summary strip: at-a-glance counts across all projects */}
@@ -293,16 +316,24 @@ export default async function DashboardPage() {
           {/* One box per client */}
           <div className="mt-8 space-y-6">
             {clientBoxes.map((box) => (
-              <section
-                key={box.clientId}
-                className="rounded-lg border p-4"
-              >
-                <Link
-                  href={`/clients/${box.clientId}`}
-                  className="text-lg font-medium hover:underline"
-                >
-                  {box.name}
-                </Link>
+              <section key={box.clientId} className="rounded-lg border p-4">
+                {/* Header: large name anchor + inline edit/delete controls */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    href={`/clients/${box.clientId}`}
+                    className="text-lg font-medium hover:underline"
+                  >
+                    {box.name}
+                  </Link>
+                  <ClientBoxControls
+                    client={{
+                      id: box.clientId,
+                      name: box.name,
+                      contact_email: box.contactEmail,
+                    }}
+                    projectCount={box.projects.length}
+                  />
+                </div>
 
                 {/* Per-client status strip */}
                 <div className="mt-2">
@@ -350,6 +381,12 @@ export default async function DashboardPage() {
           </div>
         </>
       )}
+
+      {/* Add client */}
+      <section className="mt-10">
+        <h2 className="text-xl font-medium">Add client</h2>
+        <NewClientForm />
+      </section>
     </main>
   );
 }
