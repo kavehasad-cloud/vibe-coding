@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { parseDate } from "@/app/format";
 
 // Defense-in-depth: Server Actions are reachable via direct POST, not just
 // through the UI. RLS still applies in the DB, but every write also verifies
@@ -366,6 +367,11 @@ export async function createMilestoneAction(
   if (!startDate) {
     return { error: "Start date is required." };
   }
+  // due_date is optional; only enforce ordering when both dates are present.
+  // Equal (same-day) is allowed — reject only start strictly after due.
+  if (dueDate && parseDate(startDate).getTime() > parseDate(dueDate).getTime()) {
+    return { error: "Due date must be on or after the start date." };
+  }
 
   // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
   const { error } = await supabase.from("milestones").insert({
@@ -430,6 +436,11 @@ export async function updateMilestoneAction(
   }
   if (!startDate) {
     return { error: "Start date is required." };
+  }
+  // due_date is optional; only enforce ordering when both dates are present.
+  // Equal (same-day) is allowed — reject only start strictly after due.
+  if (dueDate && parseDate(startDate).getTime() > parseDate(dueDate).getTime()) {
+    return { error: "Due date must be on or after the start date." };
   }
 
   // RLS enforces ownership on update; no manual owner filter.
