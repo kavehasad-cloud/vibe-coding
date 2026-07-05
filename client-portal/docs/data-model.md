@@ -1,6 +1,6 @@
 # Client Portal — Data Model
 
-*Last updated: 2026-07-04 · Status: reflects live schema through Day 19.*
+*Last updated: 2026-07-05 · Status: reflects live schema through Day 20.*
 
 The blueprint of what the app actually stores and how it connects.
 *(GitHub renders the diagram below automatically.)*
@@ -17,6 +17,7 @@ erDiagram
   CLIENTS ||--o{ PROJECTS : has
   PROJECTS ||--o{ MILESTONES : tracks
   PROJECTS ||--o{ RISKS : carries
+  PROJECTS ||--o{ ALLOCATIONS : plans
 
   PROFILES {
     uuid id PK "= auth.users.id"
@@ -66,6 +67,16 @@ erDiagram
     string impact "low | medium | high"
     text mitigation "nullable"
     timestamptz created_at
+  }
+  ALLOCATIONS {
+    uuid id PK
+    uuid project_id FK "-> projects, not null, on delete cascade"
+    uuid owner_id FK "-> auth.users, not null, default auth.uid()"
+    date month "not null, always the 1st of the month"
+    numeric planned_fte "nullable, default 0"
+    numeric actual_fte "nullable, default 0"
+    timestamptz created_at
+    string UNIQUE "unique(project_id, month)"
   }
 ```
 
@@ -141,6 +152,21 @@ Power Risks & Dependencies (Block 5).
   likelihood×impact matrix), **not stored** in the table.
 - **RLS:** 4 owner CRUD policies, **plus** the same nested viewer-read shape as
   milestones (via the risk's `project_id → projects.client_id`).
+
+### allocations
+Live under a project (`project_id not null references projects(id) on delete
+cascade`). One row per **project × month** holds the planned and actual FTE for
+that month (1 FTE = one person-month) — the new resourcing **and** pricing basis.
+- `month date NOT NULL` — always stored as the **1st of the month** (the month is
+  the key; the day is normalized).
+- `planned_fte numeric` and `actual_fte numeric` — both nullable, `default 0`.
+- `UNIQUE (project_id, month)` — at most one allocation row per project per month.
+- **RLS:** 4 owner CRUD policies (`auth.uid() = owner_id`), **plus** the same
+  nested viewer-read shape as milestones/risks (via `project_id →
+  projects.client_id`).
+- **Replaces the old financial model:** planned/actual **FTE per month** is now the
+  resourcing + pricing basis, superseding the flat `projects.budget` /
+  `projects.actual_spend` dollar columns, which are being retired.
 
 ---
 

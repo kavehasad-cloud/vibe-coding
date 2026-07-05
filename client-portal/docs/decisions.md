@@ -2,9 +2,14 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 ---
+
+## 2026-07-05 — `allocations` table (project × month FTE) as the resourcing + pricing model
+**Decision:** Introduced an `allocations` table (project × month, `planned_fte` + `actual_fte`) as the resourcing and pricing model, replacing the flat `projects.budget` / `actual_spend` columns. FTE (1 FTE = one person-month) is now the unit of both resource planning and client billing. Planned vs actual FTE per month drives the project's resource health; summed across a client's projects it gives the monthly capacity/billing roll-up shown on the client page.
+**Why:** The old two-number budget model couldn't express month-by-month resourcing or the FTE-based pricing the consulting practice actually uses. A per-month allocation row is the faithful model — it drives the scorecard resource grid, the client engagement roadmap, and the health signal from one source. Deferred: money/€ pricing (FTE-only for now); a soft "no allocation without a task that month" check; and auto-deriving health (health stays manually set, informed by FTE variance, not auto-derived).
+**Status:** In progress — table + RLS live (Slice 1 of 4). Scorecard FTE editing, retiring old financials, and the client-page rollup are the remaining slices.
 
 ## 2026-07-04 — /dashboard is the home; retire the standalone clients list
 **Decision:** Made `/dashboard` the application home. Retired the standalone clients list page (`/` now redirects to `/dashboard`). Client management (add/edit/delete) moved onto the dashboard, which is now client-first: one box per client with that client's project status, financials, and a filtered project list (active/on-hold/not-started starting within ~2 months, or undated). Boxes are driven by the clients query so zero-project clients still appear and are manageable. Login/signup now redirect to `/dashboard`.
