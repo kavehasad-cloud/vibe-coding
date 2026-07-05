@@ -5,6 +5,8 @@ import { ExecSummary } from "../../../../exec-summary";
 import { Financials } from "../../../../financials";
 import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
+import { AllocationGrid } from "../../../../allocation-grid";
+import { NewAllocationForm } from "../../../../new-allocation-form";
 import { RiskRow } from "../../../../risk-row";
 import { NewRiskForm } from "../../../../new-risk-form";
 import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
@@ -71,6 +73,14 @@ export default async function ProjectDetailPage({
     .order("created_at");
 
   const allRisks = risks ?? [];
+
+  const { data: allocations } = await supabase
+    .from("allocations")
+    .select("id, month, planned_fte, actual_fte")
+    .eq("project_id", projectId)
+    .order("month");
+
+  const allAllocations = allocations ?? [];
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -149,6 +159,24 @@ export default async function ProjectDetailPage({
 
           {isAdmin ? (
             <NewMilestoneForm projectId={projectId} projectPath={projectPath} />
+          ) : null}
+        </section>
+
+        {/* Block 3.5 — Resource plan (monthly FTE, allocations) */}
+        <section className="rounded-lg border p-6">
+          <h2 className="text-xl font-medium">Resource plan (monthly FTE)</h2>
+
+          <AllocationGrid
+            allocations={allAllocations}
+            projectPath={projectPath}
+            readOnly={!isAdmin}
+          />
+
+          {isAdmin ? (
+            <NewAllocationForm
+              projectId={projectId}
+              projectPath={projectPath}
+            />
           ) : null}
         </section>
 

@@ -599,3 +599,121 @@ export async function deleteRiskAction(id: string, projectPath: string) {
 
   if (projectPath) revalidatePath(projectPath);
 }
+
+export type CreateAllocationState = { error?: string; success?: boolean };
+
+// Parse an FTE field: blank → 0; otherwise must be a finite, non-negative
+// number (decimals like 1.5 are fine). Returns an error string for bad input.
+function parseFte(raw: string): { value: number } | { error: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) return { value: 0 };
+  const num = Number(trimmed);
+  if (!Number.isFinite(num) || num < 0) {
+    return { error: "FTE must be a non-negative number." };
+  }
+  return { value: num };
+}
+
+export async function createAllocationAction(
+  _prevState: CreateAllocationState,
+  formData: FormData
+): Promise<CreateAllocationState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const projectId = String(formData.get("project_id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+  const month = String(formData.get("month") ?? "").trim();
+
+  if (!projectId) {
+    return { error: "Missing project id." };
+  }
+  // An <input type="month"> yields "YYYY-MM"; normalize to the 1st of the month.
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return { error: "Month is required." };
+  }
+
+  const plannedResult = parseFte(String(formData.get("planned_fte") ?? ""));
+  if ("error" in plannedResult) return { error: plannedResult.error };
+
+  const actualResult = parseFte(String(formData.get("actual_fte") ?? ""));
+  if ("error" in actualResult) return { error: actualResult.error };
+
+  // owner_id auto-fills via the DB default (auth.uid()); RLS enforces ownership.
+  const { error } = await supabase.from("allocations").insert({
+    project_id: projectId,
+    month: `${month}-01`,
+    planned_fte: plannedResult.value,
+    actual_fte: actualResult.value,
+  });
+
+  if (error) {
+    // 23505 = unique_violation on UNIQUE(project_id, month): don't leak the raw
+    // Postgres message, guide the admin to edit the existing row instead.
+    if (error.code === "23505") {
+      return { error: "That month already has an allocation — edit it instead." };
+    }
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
+}
+
+// Positional-args action (not FormData): the scorecard grid saves a whole
+// month's row programmatically after a per-cell confirm(), so there's no form.
+// Option A — always write both values, never a partial single-field update.
+export async function updateAllocationAction(
+  id: string,
+  projectPath: string,
+  plannedFte: number,
+  actualFte: number
+): Promise<{ error?: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  if (!id) {
+    return { error: "Missing allocation id." };
+  }
+  if (!Number.isFinite(plannedFte) || plannedFte < 0) {
+    return { error: "Planned FTE must be a non-negative number." };
+  }
+  if (!Number.isFinite(actualFte) || actualFte < 0) {
+    return { error: "Actual FTE must be a non-negative number." };
+  }
+
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("allocations")
+    .update({ planned_fte: plannedFte, actual_fte: actualFte })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return {};
+}
+
+// Returns { error } (unlike the other delete actions) so the grid can restore
+// the optimistically-removed month if the delete fails.
+export async function deleteAllocationAction(
+  id: string,
+  projectPath: string
+): Promise<{ error?: string }> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  if (!id) return { error: "Missing allocation id." };
+
+  // RLS enforces ownership on delete.
+  const { error } = await supabase.from("allocations").delete().eq("id", id);
+  if (error) {
+    console.error("deleteAllocationAction:", error.message);
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return {};
+}

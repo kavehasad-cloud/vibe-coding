@@ -43,3 +43,12 @@ export function formatFull(date: string): string {
     year: "numeric",
   });
 }
+
+// Shared date helper: month + year "Jan 2026" from a date-only "YYYY-MM-DD"
+// string (allocations store the month as the 1st, e.g. "2026-01-01").
+export function formatMonth(date: string): string {
+  return parseDate(date).toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+  });
+}
