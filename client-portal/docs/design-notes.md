@@ -49,8 +49,10 @@ rendering it for both a red/in-trouble project and a grey/upcoming one.
    from leadership). Bottom line up front.
 3. **Timeline & velocity** — last 2–3 accomplishments (with dates) + next 2–3
    deliverables (with target dates).
-4. **Financials & resources** — budget vs actual (variance %) + resourcing status
-   (e.g. staffed / bottlenecked).
+4. **Resource plan** — the monthly FTE grid from the `allocations` table: planned
+   vs actual FTE per month (and the variance). This replaces the old EUR financials
+   (budget vs actual) and the staffed/stretched/bottlenecked resourcing badge, both
+   retired — FTE variance is the resource-health signal now.
 5. **Risks, blockers & dependencies** — top 2–3 active risks + their mitigations,
    plus hard external dependencies.
 

@@ -1,6 +1,6 @@
 # Client Portal — Data Model
 
-*Last updated: 2026-07-05 · Status: reflects live schema through Day 20.*
+*Last updated: 2026-07-06 · Status: reflects live schema through Day 21.*
 
 The blueprint of what the app actually stores and how it connects.
 *(GitHub renders the diagram below automatically.)*
@@ -43,9 +43,6 @@ erDiagram
     text summary
     text asks
     text issues
-    numeric budget
-    numeric actual_spend
-    string resourcing "staffed | stretched | bottlenecked"
     timestamptz created_at
   }
   MILESTONES {
@@ -121,14 +118,14 @@ The consulting clients. `owner_id` points to the consultant who owns the row.
 
 ### projects
 Live under a client (`client_id not null references clients(id) on delete
-cascade`). Holds name, status, RAG health, the executive-summary text, and
-financials.
+cascade`). Holds name, status, RAG health, and the executive-summary text.
+Resourcing **and** pricing now live in the `allocations` table as monthly FTE —
+`projects` no longer carries any money or resourcing columns (the old `budget`,
+`actual_spend`, and `resourcing` columns were dropped in Slice 3, Day 21).
 - `status` — `CHECK in ('not_started','active','on_hold','completed','cancelled')`,
   default `not_started`.
 - `health` — `CHECK in ('green','amber','red')`, default `green`.
-- `resourcing` — `CHECK in ('staffed','stretched','bottlenecked')` (nullable).
 - `summary`, `asks`, `issues` — nullable free text (Block 2, Executive Summary).
-- `budget`, `actual_spend` — `numeric` (Block 4, Financials & Resources).
 - **RLS:** 4 per-user policies (`auth.uid() = owner_id`), **plus** an additive
   client-viewer SELECT:
   `client_id = (select client_id from profiles where id = auth.uid())`.
@@ -164,9 +161,10 @@ that month (1 FTE = one person-month) — the new resourcing **and** pricing bas
 - **RLS:** 4 owner CRUD policies (`auth.uid() = owner_id`), **plus** the same
   nested viewer-read shape as milestones/risks (via `project_id →
   projects.client_id`).
-- **Replaces the old financial model:** planned/actual **FTE per month** is now the
-  resourcing + pricing basis, superseding the flat `projects.budget` /
-  `projects.actual_spend` dollar columns, which are being retired.
+- **Replaced the old financial model:** planned/actual **FTE per month** is now the
+  resourcing + pricing basis, having superseded the flat `projects.budget` /
+  `projects.actual_spend` dollar columns and the `projects.resourcing` badge — all
+  three were dropped from `projects` in Slice 3 (Day 21).
 
 ---
 

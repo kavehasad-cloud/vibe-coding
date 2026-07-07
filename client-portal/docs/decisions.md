@@ -2,9 +2,24 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-05
+Last updated: 2026-07-06
 
 ---
+
+## 2026-07-06 — Slice 3: executed the EUR→FTE swap; dropped the money columns
+**Decision:** Carried out the switch the 2026-07-05 allocations decision set up. The
+`projects.budget`, `projects.actual_spend`, and `projects.resourcing` columns were
+**dropped** from the database. The scorecard's "Financials & Resources" block was
+removed — the monthly FTE grid (allocations) is now the sole resource view on the
+scorecard. On the dashboard, the per-client EUR money line was replaced by a
+**current-month FTE** line (planned vs actual FTE + variance), and a **portfolio
+total** strip (current-month FTE across all clients) was added to the admin overview.
+**Why:** Finish retiring the flat two-number money model in favor of month-by-month
+FTE, so resourcing has one source of truth. `resourcing` (staffed / stretched /
+bottlenecked) was **retired entirely** rather than relocated: planned-vs-actual FTE
+variance is the resource-health signal now, so the manual badge was redundant.
+**Status:** Done. Docs (data-model.md, design-notes.md) updated to match; the
+2026-07-01 money-model ADR is marked superseded below.
 
 ## 2026-07-05 — `allocations` table (project × month FTE) as the resourcing + pricing model
 **Decision:** Introduced an `allocations` table (project × month, `planned_fte` + `actual_fte`) as the resourcing and pricing model, replacing the flat `projects.budget` / `actual_spend` columns. FTE (1 FTE = one person-month) is now the unit of both resource planning and client billing. Planned vs actual FTE per month drives the project's resource health; summed across a client's projects it gives the monthly capacity/billing roll-up shown on the client page.
@@ -34,7 +49,7 @@ Last updated: 2026-07-05
 ## 2026-07-01 — Money as `numeric`, variance computed on read
 **Decision:** Store `budget`/`actual_spend` as `numeric`, and compute financial variance on read instead of storing it.
 **Why:** `numeric` is exact for currency (floats drift), and computed variance can't fall out of sync.
-**Status:** Live.
+**Status:** Superseded by the 2026-07-05 allocations/FTE decision — the EUR money model (`budget`/`actual_spend`) was retired and the columns dropped in Slice 3 (2026-07-06, above).
 
 ## 2026-07-01 — Cut the "last week / next week" text digest
 **Decision:** Drop the planned text digest summarizing recent and upcoming work.
