@@ -2,7 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { STATUS_LABELS } from "@/app/status-labels";
-import { formatCurrency, parseDate, todayMidnight } from "@/app/format";
+import { parseDate, todayMidnight, localDateStr } from "@/app/format";
 import { NewClientForm } from "@/app/new-client-form";
 import { ClientBoxControls } from "@/app/client-box-controls";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,9 @@ type DashboardProject = {
   status: string;
   health: string;
   clientId: string;
-  budget: number | null;
-  actualSpend: number | null;
 };
+
+type FteTotals = { planned: number; actual: number };
 
 type ClientRecord = {
   id: string;
@@ -92,52 +92,43 @@ function StatusStrip({ projects }: { projects: DashboardProject[] }) {
   );
 }
 
-// Variance = actual − budget. Positive = over budget (bad, red); zero/negative =
-// on/under budget (good, green). Mirrors the Variance component in financials.tsx.
-function VarianceFigure({
-  budget,
-  actual,
-  showPct = false,
-}: {
-  budget: number;
-  actual: number;
-  showPct?: boolean;
-}) {
-  const diff = actual - budget;
-  const overBudget = diff > 0;
-  const magnitude = formatCurrency(Math.abs(diff));
-  // Guard divide-by-zero when budget is 0.
-  const pct = budget !== 0 ? Math.round((Math.abs(diff) / budget) * 100) : 0;
-  return (
-    <span className={overBudget ? "text-red-700" : "text-green-700"}>
-      {overBudget ? "+" : "-"}
-      {magnitude}
-      {showPct ? ` (${pct}% ${overBudget ? "over" : "under"} budget)` : ""}
-    </span>
-  );
+// FTE printed with at most one decimal: whole numbers stay whole ("3"), fractions
+// show one place ("2.5"). No currency — FTE is a plain count of person-months.
+function formatFte(value: number): string {
+  return value.toLocaleString("en-US", { maximumFractionDigits: 1 });
 }
 
-// Budget/actual over the non-cancelled projects only — a cancelled project's
-// budget is an abandoned commitment. Nulls count as 0.
-function ClientFinancials({ projects }: { projects: DashboardProject[] }) {
-  const inScope = projects.filter((p) => p.status !== "cancelled");
-  const budget = inScope.reduce((s, p) => s + (p.budget ?? 0), 0);
-  const actual = inScope.reduce((s, p) => s + (p.actualSpend ?? 0), 0);
+// Current-month resourcing in FTE (1 FTE = one person-month). Actual over planned
+// is flagged red (over-allocated); on/under planned is green — mirrors the old
+// money line's color logic, in FTE not €. Shared by the per-client boxes and the
+// portfolio total strip; only the leading `label` differs. Empty totals → 0 / 0.
+function FteLine({
+  label,
+  planned,
+  actual,
+}: {
+  label: string;
+  planned: number;
+  actual: number;
+}) {
+  const diff = actual - planned;
+  const sign = diff > 0 ? "+" : diff < 0 ? "−" : "";
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+      <span className="text-muted-foreground">{label}</span>
       <span>
-        <span className="text-muted-foreground">Budget</span>{" "}
-        <span className="font-medium">{formatCurrency(budget)}</span>
+        <span className="font-medium">{formatFte(planned)}</span>{" "}
+        <span className="text-muted-foreground">planned FTE</span>
       </span>
       <span className="text-muted-foreground">·</span>
       <span>
-        <span className="text-muted-foreground">Actual</span>{" "}
-        <span className="font-medium">{formatCurrency(actual)}</span>
+        <span className="font-medium">{formatFte(actual)}</span>{" "}
+        <span className="text-muted-foreground">actual FTE</span>
       </span>
       <span className="text-muted-foreground">·</span>
-      <span>
-        <span className="text-muted-foreground">Variance</span>{" "}
-        <VarianceFigure budget={budget} actual={actual} showPct />
+      <span className={diff > 0 ? "text-red-700" : "text-green-700"}>
+        {sign}
+        {formatFte(Math.abs(diff))} FTE
       </span>
     </div>
   );
@@ -190,7 +181,7 @@ export default async function DashboardPage() {
   // below; client names come from the clients query above.
   const { data: rows } = await supabase
     .from("projects")
-    .select("id, name, status, health, client_id, budget, actual_spend")
+    .select("id, name, status, health, client_id")
     .order("created_at");
 
   const projects: DashboardProject[] = (rows ?? []).map((r) => ({
@@ -199,9 +190,45 @@ export default async function DashboardPage() {
     status: r.status as string,
     health: r.health as string,
     clientId: r.client_id as string,
-    budget: (r.budget as number | null) ?? null,
-    actualSpend: (r.actual_spend as number | null) ?? null,
   }));
+
+  // Current-month FTE roll-up. allocations store `month` as the 1st of the month
+  // (a date, e.g. "2026-07-01"); build that exact local key so .eq matches — a
+  // UTC/timestamp-formatted key would match nothing and show 0 for everyone.
+  const now = todayMidnight();
+  const monthKey = localDateStr(new Date(now.getFullYear(), now.getMonth(), 1));
+
+  const { data: allocRows } = await supabase
+    .from("allocations")
+    .select("project_id, planned_fte, actual_fte")
+    .eq("month", monthKey);
+
+  // Map each allocation to its client via the projects list, summing planned and
+  // actual FTE per client. Clients with no row this month stay at 0 / 0.
+  const projectToClient = new Map<string, string>();
+  for (const p of projects) projectToClient.set(p.id, p.clientId);
+
+  const fteByClient = new Map<string, FteTotals>();
+  for (const row of allocRows ?? []) {
+    const a = row as {
+      project_id: string;
+      planned_fte: number | null;
+      actual_fte: number | null;
+    };
+    const clientId = projectToClient.get(a.project_id);
+    if (!clientId) continue;
+    const acc = fteByClient.get(clientId) ?? { planned: 0, actual: 0 };
+    acc.planned += a.planned_fte ?? 0;
+    acc.actual += a.actual_fte ?? 0;
+    fteByClient.set(clientId, acc);
+  }
+
+  // Portfolio current-month totals: sum the per-client FTE across all clients.
+  const portfolioFte: FteTotals = { planned: 0, actual: 0 };
+  for (const t of fteByClient.values()) {
+    portfolioFte.planned += t.planned;
+    portfolioFte.actual += t.actual;
+  }
 
   // One broad milestone query (RLS scopes to owner): just what's needed to find
   // each project's earliest start. No date/status filter — we bucket in JS.
@@ -284,6 +311,7 @@ export default async function DashboardPage() {
         projects: clientProjects,
         listed: clientProjects.filter(isListed).sort(compareListed),
         priority: boxPriority(clientProjects),
+        fte: fteByClient.get(c.id) ?? { planned: 0, actual: 0 },
       };
     })
     .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
@@ -313,6 +341,15 @@ export default async function DashboardPage() {
             <StatusStrip projects={projects} />
           </div>
 
+          {/* Portfolio current-month FTE total across all clients */}
+          <div className="mt-1">
+            <FteLine
+              label="This month across all clients:"
+              planned={portfolioFte.planned}
+              actual={portfolioFte.actual}
+            />
+          </div>
+
           {/* One box per client */}
           <div className="mt-8 space-y-6">
             {clientBoxes.map((box) => (
@@ -340,9 +377,13 @@ export default async function DashboardPage() {
                   <StatusStrip projects={box.projects} />
                 </div>
 
-                {/* Per-client financials */}
+                {/* Per-client current-month FTE */}
                 <div className="mt-1">
-                  <ClientFinancials projects={box.projects} />
+                  <FteLine
+                    label="This month:"
+                    planned={box.fte.planned}
+                    actual={box.fte.actual}
+                  />
                 </div>
 
                 {/* Relevant projects */}

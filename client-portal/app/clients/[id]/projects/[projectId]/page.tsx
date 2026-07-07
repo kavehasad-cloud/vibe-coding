@@ -2,7 +2,6 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ExecSummary } from "../../../../exec-summary";
-import { Financials } from "../../../../financials";
 import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
 import { AllocationGrid } from "../../../../allocation-grid";
@@ -38,9 +37,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select(
-      "name, status, health, client_id, summary, asks, issues, budget, actual_spend, resourcing"
-    )
+    .select("name, status, health, client_id, summary, asks, issues")
     .eq("id", projectId)
     .single();
 
@@ -178,19 +175,6 @@ export default async function ProjectDetailPage({
               projectPath={projectPath}
             />
           ) : null}
-        </section>
-
-        {/* Block 4 — Financials & Resources */}
-        <section className="rounded-lg border p-6">
-          <h2 className="text-xl font-medium">Financials &amp; Resources</h2>
-          <Financials
-            projectId={projectId}
-            projectPath={projectPath}
-            budget={project.budget}
-            actualSpend={project.actual_spend}
-            resourcing={project.resourcing}
-            readOnly={!isAdmin}
-          />
         </section>
 
         {/* Block 5 — Risks & Dependencies (risks) */}
