@@ -1,8 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
+import { FteRoadmap } from "@/app/fte-roadmap";
 
 async function logout() {
   "use server";
@@ -48,8 +47,31 @@ export default async function PortalPage() {
     .eq("client_id", profile.client_id)
     .order("created_at");
 
+  const projectList = projects ?? [];
+  const projectIds = projectList.map((p) => p.id);
+
+  // Milestones drive each project's bar span; allocations fill the month cells.
+  // Both scoped to this client's projects via .in (RLS also enforces it). Skip
+  // the round-trip entirely when the client has no projects.
+  const [milestonesRes, allocationsRes] = projectIds.length
+    ? await Promise.all([
+        supabase
+          .from("milestones")
+          .select("id, project_id, start_date, due_date")
+          .in("project_id", projectIds),
+        supabase
+          .from("allocations")
+          .select("project_id, month, planned_fte, actual_fte")
+          .in("project_id", projectIds)
+          .order("month"),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const milestones = milestonesRes.data ?? [];
+  const allocations = allocationsRes.data ?? [];
+
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">{client.name}</h1>
         <form action={logout}>
@@ -59,42 +81,17 @@ export default async function PortalPage() {
         </form>
       </div>
 
-      <h2 className="mt-8 text-xl font-medium">Projects</h2>
+      <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
 
-      {!projects || projects.length === 0 ? (
+      {projectList.length === 0 ? (
         <p className="mt-4 text-muted-foreground">No projects yet</p>
       ) : (
-        <ul className="mt-4 divide-y rounded-lg border">
-          {projects.map((project) => (
-            <li
-              key={project.id}
-              className="flex items-center justify-between gap-3 px-4 py-3"
-            >
-              <Link
-                href={`/clients/${profile.client_id}/projects/${project.id}`}
-                className="min-w-0 truncate font-medium hover:underline"
-              >
-                {project.name}
-              </Link>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {STATUS_LABELS[project.status] ?? project.status}
-                </span>
-                {project.status === "active" || project.status === "on_hold" ? (
-                  <span
-                    className={`rounded-md border px-2 py-1 text-sm capitalize ${
-                      HEALTH_STYLES[project.health] ?? ""
-                    }`}
-                  >
-                    {project.health}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+        <FteRoadmap
+          clientId={profile.client_id}
+          projects={projectList}
+          milestones={milestones}
+          allocations={allocations}
+        />
       )}
     </main>
   );
