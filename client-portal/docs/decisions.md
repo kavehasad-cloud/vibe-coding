@@ -2,9 +2,14 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-06
+Last updated: 2026-07-08
 
 ---
+
+## 2026-07-08 — Shared role-aware NavBar; `logout()` + `getSessionRole()` in `app/auth.ts`
+**Decision:** Extracted the duplicated inline `logout()` (copied in `dashboard/page.tsx` and `portal/page.tsx`) into one shared server action in `app/auth.ts`, alongside a `getSessionRole()` helper returning `{ role, homeHref }`. Added a single role-aware `NavBar` (home link → `homeHref`, shared Log out) at the top of all four authenticated pages (dashboard, portal, client detail, project scorecard), removing both inline logout copies. Chose **approach A**: `NavBar` self-fetches the session role rather than taking it as a prop.
+**Why:** Same single-source-of-truth principle as the `status-labels.ts` (ADR 2026-07-02) and `format.ts` (ADR 2026-07-04) extractions — a copied logout would drift. Self-fetching keeps usage uniform (`<NavBar />` everywhere, no prop-threading) and works on pages that don't already query role (client detail had no role read), at the cost of one indexed `profiles` read per page. `getSessionRole()` is the seam to later consolidate the role queries still scattered inline across pages.
+**Status:** Done. Typecheck clean; four pages wired.
 
 ## 2026-07-06 — Slice 3: executed the EUR→FTE swap; dropped the money columns
 **Decision:** Carried out the switch the 2026-07-05 allocations decision set up. The
