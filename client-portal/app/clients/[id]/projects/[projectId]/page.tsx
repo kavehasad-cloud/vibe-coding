@@ -8,6 +8,7 @@ import { AllocationGrid } from "../../../../allocation-grid";
 import { NewAllocationForm } from "../../../../new-allocation-form";
 import { RiskRow } from "../../../../risk-row";
 import { NewRiskForm } from "../../../../new-risk-form";
+import { NavBar } from "@/app/nav-bar";
 import { STATUS_LABELS, HEALTH_STYLES } from "@/app/status-labels";
 
 export default async function ProjectDetailPage({
@@ -81,6 +82,8 @@ export default async function ProjectDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
+      <NavBar />
+
       <Link
         href={`/clients/${id}`}
         className="text-sm text-muted-foreground hover:underline"

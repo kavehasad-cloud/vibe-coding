@@ -5,7 +5,7 @@ import { STATUS_LABELS } from "@/app/status-labels";
 import { parseDate, todayMidnight, localDateStr } from "@/app/format";
 import { NewClientForm } from "@/app/new-client-form";
 import { ClientBoxControls } from "@/app/client-box-controls";
-import { Button } from "@/components/ui/button";
+import { NavBar } from "@/app/nav-bar";
 
 type DashboardProject = {
   id: string;
@@ -132,13 +132,6 @@ function FteLine({
       </span>
     </div>
   );
-}
-
-async function logout() {
-  "use server";
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
 }
 
 export default async function DashboardPage() {
@@ -318,18 +311,13 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">
-            Roll-up across all clients and projects.
-          </p>
-        </div>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Log out
-          </Button>
-        </form>
+      <NavBar />
+
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-muted-foreground">
+          Roll-up across all clients and projects.
+        </p>
       </div>
 
       {clients.length === 0 ? (

@@ -1,14 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { NavBar } from "@/app/nav-bar";
 import { FteRoadmap } from "@/app/fte-roadmap";
-
-async function logout() {
-  "use server";
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
 
 export default async function PortalPage() {
   const supabase = await createClient();
@@ -72,14 +65,9 @@ export default async function PortalPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-semibold tracking-tight">{client.name}</h1>
-        <form action={logout}>
-          <Button type="submit" variant="outline" size="sm">
-            Log out
-          </Button>
-        </form>
-      </div>
+      <NavBar />
+
+      <h1 className="text-3xl font-semibold tracking-tight">{client.name}</h1>
 
       <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
 

@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { NavBar } from "@/app/nav-bar";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectRow } from "../../project-row";
 
@@ -38,6 +39,8 @@ export default async function ClientDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
+      <NavBar />
+
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
         ← Back to clients
       </Link>
