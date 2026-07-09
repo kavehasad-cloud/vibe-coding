@@ -71,11 +71,15 @@ export function FteRoadmap({
   projects,
   milestones,
   allocations,
+  monthsBefore = 1,
+  monthsAfter = 2,
 }: {
   clientId: string;
   projects: Project[];
   milestones: Milestone[];
   allocations: Allocation[];
+  monthsBefore?: number;
+  monthsAfter?: number;
 }) {
   // Per-project span: earliest milestone start → latest milestone due, falling
   // back to start when a milestone has no due yet so it still contributes.
@@ -117,12 +121,12 @@ export function FteRoadmap({
     );
   }
 
-  // Fixed 4-month window anchored on today: last month, this month, next two.
-  // Keys via localDateStr on the 1st of each month so they match
-  // allocations.month exactly.
+  // Month window anchored on today, sized by monthsBefore/monthsAfter (default
+  // 1 before + 2 after = the client portal's 4-month view). Keys via
+  // localDateStr on the 1st of each month so they match allocations.month.
   const base = todayMidnight();
   const months: { key: string; label: string; index: number }[] = [];
-  for (let i = -1; i <= 2; i++) {
+  for (let i = -monthsBefore; i <= monthsAfter; i++) {
     const first = new Date(base.getFullYear(), base.getMonth() + i, 1);
     const key = localDateStr(first);
     months.push({ key, label: formatMonth(key), index: monthIndex(first) });

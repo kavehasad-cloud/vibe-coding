@@ -4,6 +4,7 @@ import Link from "next/link";
 import { NavBar } from "@/app/nav-bar";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectRow } from "../../project-row";
+import { FteRoadmap } from "@/app/fte-roadmap";
 
 export default async function ClientDetailPage({
   params,
@@ -37,8 +38,31 @@ export default async function ClientDetailPage({
     .eq("client_id", id)
     .order("created_at");
 
+  const projectList = projects ?? [];
+  const projectIds = projectList.map((p) => p.id);
+
+  // Milestones drive each project's bar span; allocations fill the month cells.
+  // Both scoped to this client's projects via .in (RLS also enforces it). Skip
+  // the round-trip entirely when the client has no projects.
+  const [milestonesRes, allocationsRes] = projectIds.length
+    ? await Promise.all([
+        supabase
+          .from("milestones")
+          .select("id, project_id, start_date, due_date")
+          .in("project_id", projectIds),
+        supabase
+          .from("allocations")
+          .select("project_id, month, planned_fte, actual_fte")
+          .in("project_id", projectIds)
+          .order("month"),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const milestones = milestonesRes.data ?? [];
+  const allocations = allocationsRes.data ?? [];
+
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
+    <main className="mx-auto max-w-4xl px-6 py-12">
       <NavBar />
 
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
@@ -51,6 +75,21 @@ export default async function ClientDetailPage({
       {client.contact_email ? (
         <p className="mt-1 text-muted-foreground">{client.contact_email}</p>
       ) : null}
+
+      <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
+
+      {projectList.length === 0 ? (
+        <p className="mt-4 text-muted-foreground">No projects yet</p>
+      ) : (
+        <FteRoadmap
+          clientId={id}
+          projects={projectList}
+          milestones={milestones}
+          allocations={allocations}
+          monthsBefore={2}
+          monthsAfter={3}
+        />
+      )}
 
       <h2 className="mt-8 text-xl font-medium">Projects</h2>
 

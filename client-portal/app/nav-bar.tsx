@@ -15,7 +15,7 @@ export async function NavBar() {
         href={homeHref}
         className="text-lg font-semibold tracking-tight hover:underline"
       >
-        Client Portal
+        Home
       </Link>
       <form action={logout}>
         <Button type="submit" variant="outline" size="sm">
