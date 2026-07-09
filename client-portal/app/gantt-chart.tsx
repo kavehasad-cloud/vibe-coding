@@ -9,7 +9,7 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { parseDate, formatShort, todayMidnight } from "@/app/format";
+import { parseDate, isoWeek, todayMidnight } from "@/app/format";
 
 type Task = {
   id: string;
@@ -75,7 +75,7 @@ export function GanttChart({
   // Weekly boundaries, one every 7 days from the range start.
   const weeks: { left: number; label: string }[] = [];
   for (let t = rangeStart; t <= rangeEnd; t += 7 * DAY_MS) {
-    weeks.push({ left: pct(t), label: formatShort(new Date(t)) });
+    weeks.push({ left: pct(t), label: `W${isoWeek(new Date(t))}` });
   }
 
   const todayLeft = pct(today);

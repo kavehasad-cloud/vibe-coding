@@ -52,3 +52,18 @@ export function formatMonth(date: string): string {
     year: "numeric",
   });
 }
+
+// Shared date helper: ISO 8601 week number (weeks start Monday; week 1 is the
+// week containing the year's first Thursday / Jan 4). DST-safe — operates on
+// local-parts dates like the rest of this module.
+export function isoWeek(date: Date): number {
+  // Shift to the Thursday of this ISO week, then count weeks from the year's
+  // first Thursday.
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
+  d.setDate(d.getDate() - day + 3); // move to this week's Thursday
+  const firstThursday = new Date(d.getFullYear(), 0, 4);
+  const fDay = (firstThursday.getDay() + 6) % 7;
+  firstThursday.setDate(firstThursday.getDate() - fDay + 3);
+  return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
+}
