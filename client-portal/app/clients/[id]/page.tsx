@@ -22,6 +22,17 @@ export default async function ClientDetailPage({
     redirect("/login");
   }
 
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  // Fail closed: only an explicit admin sees the client management page.
+  if (profileError || profile?.role !== "admin") {
+    redirect("/portal");
+  }
+
   const { data: client } = await supabase
     .from("clients")
     .select("name, contact_email")

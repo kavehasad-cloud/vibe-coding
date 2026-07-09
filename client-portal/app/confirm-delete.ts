@@ -10,7 +10,16 @@ export function confirmDeleteClient(
     projectCount > 0
       ? `Delete ${name}? This will also permanently delete their ${projectCount} project${
           projectCount === 1 ? "" : "s"
-        }, along with all milestones and risks. This cannot be undone.`
+        }, along with all milestones, risks, and allocations. This cannot be undone.`
       : `Delete ${name}? This cannot be undone.`;
   return confirm(message);
+}
+
+// Confirm for deleting a single project. Deleting a project cascades in the DB
+// to its milestones, risks, and allocations (FK on delete cascade), so the
+// message names the full blast radius. Returns true to proceed.
+export function confirmDeleteProject(name: string): boolean {
+  return confirm(
+    `Delete ${name}? This will also permanently delete all of its milestones, risks, and allocations. This cannot be undone.`
+  );
 }

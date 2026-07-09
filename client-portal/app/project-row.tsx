@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectStatusSelect } from "./project-status-select";
 import { ProjectHealthSelect } from "./project-health-select";
+import { confirmDeleteProject } from "./confirm-delete";
 
 type Project = {
   id: string;
@@ -102,7 +103,12 @@ export function ProjectRow({
         <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
           Edit
         </Button>
-        <form action={deleteProjectAction}>
+        <form
+          action={deleteProjectAction}
+          onSubmit={(e) => {
+            if (!confirmDeleteProject(project.name)) e.preventDefault();
+          }}
+        >
           <input type="hidden" name="id" value={project.id} />
           <input type="hidden" name="client_id" value={clientId} />
           <Button size="sm" variant="outline" type="submit">
