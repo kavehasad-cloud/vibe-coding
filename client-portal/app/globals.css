@@ -8,8 +8,20 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-heading);
+  --font-logo: var(--font-logo);
+  /* EDON brand palette utilities */
+  --color-paper: var(--paper);
+  --color-mist: var(--mist);
+  --color-platinum: var(--platinum);
+  --color-slate: var(--slate);
+  --color-graphite: var(--graphite);
+  --color-ink: var(--ink);
+  --color-ocean-tint: var(--ocean-tint);
+  --color-ocean: var(--ocean);
+  --color-ocean-dark: var(--ocean-dark);
+  --color-sage: var(--sage);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,24 +61,41 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  /* EDON brand palette */
+  --paper: #ffffff;
+  --mist: #e7e7e8;
+  --platinum: #c4c6c9;
+  --slate: #919295;
+  --graphite: #6d6e71;
+  --ink: #1a1b1d;
+  --ocean-tint: #e9edf2;
+  --ocean: #1f3047;
+  --ocean-dark: #16233a;
+  --sage: #74837a;
+  /* Font stacks (Manrope for all UI, Tenor Sans for logo only) */
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-logo: var(--font-tenor), Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--ocean);
+  --primary-foreground: var(--paper);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted: var(--mist);
+  --muted-foreground: var(--graphite);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: var(--platinum);
+  --input: var(--platinum);
+  --ring: var(--ocean);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
