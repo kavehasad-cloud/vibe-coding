@@ -87,6 +87,23 @@ Numbers in tables/grids: use tabular figures (`tabular-nums`) so columns align.
 **Eyebrows / section markers:** small, uppercase, tracked (letter-spaced), Graphite or Slate,
 Manrope SemiBold — matches the brand doc's "OUR VALUES" / "STAT TILES" style.
 
+### Type scale (KEEP IT SMALL — this is a dense tool, not a marketing page)
+
+Current headings are TOO BIG. Come down to a tight, professional scale (Linear/Notion register).
+These are targets, not marketing sizes — err smaller, never larger:
+
+| Role | Size | Weight |
+|---|---|---|
+| Page title (e.g. "Dashboard") | ~20-24px | SemiBold 600 |
+| Panel / section heading | ~14-16px | SemiBold 600 |
+| Subhead | ~13-14px | Medium 500 |
+| Body / table text | ~13-14px | Regular 400 |
+| Small / meta / eyebrow | ~11-12px | Medium/SemiBold |
+
+- **Never** use a giant display heading. A page title is a modest label, not a hero.
+- Hierarchy comes from **weight and colour** (SemiBold Ink vs Regular Graphite), not from big sizes.
+- Tighten line-height on headings; keep body comfortable.
+
 ---
 
 ## 4. Shape & space
@@ -100,6 +117,45 @@ Manrope SemiBold — matches the brand doc's "OUR VALUES" / "STAT TILES" style.
 - **Borders:** hairline, Platinum (`#c4c6c9`). This is how surfaces separate — not shadows.
 - **Spacing:** generous and consistent. Use an 8px rhythm. Err toward MORE whitespace.
   Density should come from clean alignment, not cramming.
+
+---
+
+## 4.5 Layout: DASHBOARD, not report (this is the most important layout rule)
+
+The app must read as a **dashboard** — balanced panels arranged side by side, taken in at a
+glance — NOT as a **report** (one section stacked on top of another running down a long scroll).
+
+- **Panels sit in a balanced GRID, side by side.** Where content allows, place panels in a
+  multi-column grid (2 columns on a normal screen, more where it fits) rather than a single
+  vertical stack. Related information lives next to each other, not below.
+- **Balance and align.** Panels in a row share equal width and align to a clean grid. Consistent
+  gaps between panels (the 8px rhythm). No ragged, different-width blocks running down the page.
+- **Scannable at a glance.** The most important summary (the "is everything OK?" answer) sits at
+  the top; detail is arranged in tidy panels below. Avoid making the user scroll through a
+  document to find things.
+- **Each panel is a grid-motif card** (thin Platinum outline, modest radius, no shadow, generous
+  internal padding) — the same card language everywhere.
+- **The scorecard specifically:** its blocks (Status, Exec Summary, Timeline, Resource plan,
+  Risks) should be laid out as a **balanced 2-column panel grid**, not five full-width blocks
+  stacked vertically. Think tiles next to each other, a control-panel view.
+- **The dashboard specifically:** the per-client boxes should tile in a balanced grid (already
+  partly there) — keep them even and aligned, with the global summary as a compact strip on top.
+
+When a layout feels like a printed document, it's wrong. Rework it into balanced panels.
+
+---
+
+## 4.6 The top bar / nav — HARMONIZED across every page
+
+The top navigation must be **identical on every authenticated page** — same height, same logo
+placement, same spacing, same treatment. It is the one constant frame around every screen.
+
+- One shared component, uniform everywhere. No per-page variation in height or style.
+- Left: the EDON mark (grid mark for the compact corner). Right: Log out (and any global action).
+- A single hairline Platinum divider under it. No shadow.
+- Page-specific back-links ("Back to client") live BELOW the bar, in the page content — they are
+  not part of the global bar.
+- Keep it slim and quiet — it frames the content, it doesn't compete with it.
 
 ---
 

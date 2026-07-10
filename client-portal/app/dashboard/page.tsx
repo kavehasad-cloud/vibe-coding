@@ -5,7 +5,7 @@ import { STATUS_LABELS } from "@/app/status-labels";
 import { parseDate, todayMidnight, localDateStr } from "@/app/format";
 import { NewClientForm } from "@/app/new-client-form";
 import { ClientBoxControls } from "@/app/client-box-controls";
-import { NavBar } from "@/app/nav-bar";
+import { AppShell } from "@/app/app-shell";
 
 type DashboardProject = {
   id: string;
@@ -310,9 +310,7 @@ export default async function DashboardPage() {
     .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <NavBar />
-
+    <AppShell maxWidth="max-w-2xl">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="mt-1 text-muted-foreground">
@@ -416,6 +414,6 @@ export default async function DashboardPage() {
         <h2 className="text-xl font-medium">Add client</h2>
         <NewClientForm />
       </section>
-    </main>
+    </AppShell>
   );
 }

@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { NavBar } from "@/app/nav-bar";
+import { AppShell } from "@/app/app-shell";
 import { FteRoadmap } from "@/app/fte-roadmap";
 
 export default async function PortalPage() {
@@ -64,9 +64,7 @@ export default async function PortalPage() {
   const allocations = allocationsRes.data ?? [];
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <NavBar />
-
+    <AppShell maxWidth="max-w-4xl">
       <h1 className="text-3xl font-semibold tracking-tight">{client.name}</h1>
 
       <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
@@ -81,6 +79,6 @@ export default async function PortalPage() {
           allocations={allocations}
         />
       )}
-    </main>
+    </AppShell>
   );
 }

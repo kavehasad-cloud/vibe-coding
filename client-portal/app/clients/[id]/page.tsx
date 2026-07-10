@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { NavBar } from "@/app/nav-bar";
+import { AppShell } from "@/app/app-shell";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectRow } from "../../project-row";
 import { FteRoadmap } from "@/app/fte-roadmap";
@@ -73,9 +73,7 @@ export default async function ClientDetailPage({
   const allocations = allocationsRes.data ?? [];
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <NavBar />
-
+    <AppShell maxWidth="max-w-4xl">
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
         ← Back to clients
       </Link>
@@ -115,6 +113,6 @@ export default async function ClientDetailPage({
       )}
 
       <NewProjectForm clientId={id} />
-    </main>
+    </AppShell>
   );
 }
