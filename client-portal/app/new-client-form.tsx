@@ -22,7 +22,7 @@ export function NewClientForm() {
     <form
       ref={formRef}
       action={formAction}
-      className="mt-6 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <div className="flex-1 space-y-1.5">
         <label htmlFor="name" className="text-sm font-medium">

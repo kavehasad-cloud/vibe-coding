@@ -32,7 +32,7 @@ export function NewRiskForm({
     <form
       ref={formRef}
       action={formAction}
-      className="mt-6 flex flex-col gap-3 rounded-lg border p-4"
+      className="flex flex-col gap-3"
     >
       <input type="hidden" name="project_id" value={projectId} />
       <input type="hidden" name="project_path" value={projectPath} />

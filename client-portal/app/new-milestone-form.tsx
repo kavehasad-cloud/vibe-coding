@@ -28,7 +28,7 @@ export function NewMilestoneForm({
     <form
       ref={formRef}
       action={formAction}
-      className="mt-6 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 sm:flex-row sm:items-end"
     >
       <input type="hidden" name="project_id" value={projectId} />
       <input type="hidden" name="project_path" value={projectPath} />

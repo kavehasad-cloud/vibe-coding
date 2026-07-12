@@ -159,6 +159,27 @@ placement, same spacing, same treatment. It is the one constant frame around eve
 
 ---
 
+## 4.7 Panels & panel titles (RIGID, uniform — no variation)
+
+Every panel/card in the app follows ONE structure so the whole app reads as one system.
+
+- **Panel = a shadcn `Card`** (use the real shadcn Card component, pulled via the shadcn MCP — do
+  not hand-roll `<div className="rounded-lg border">`). Thin Platinum outline, modest radius,
+  NO shadow, generous internal padding.
+- **Panel titles are IDENTICAL everywhere** — this is the one title treatment, applied to every
+  panel header with zero variation:
+  - Small, **UPPERCASE**, letter-spaced (tracked), **Graphite** (`#6d6e71`), Manrope SemiBold,
+    ~11–12px. (The "STATUS & PULSE" eyebrow style — now the standard for ALL panel titles.)
+  - Examples: "EXECUTIVE SUMMARY", "TIMELINE & VELOCITY", "RESOURCE PLAN", "RISKS & DEPENDENCIES".
+  - NEVER a large, mixed-case, Ink panel heading. Titles are quiet tracked-caps labels, clearly
+    distinct from body text (which is Ink, normal case).
+- **Every distinct section gets its own panel** — including admin ENTRY FORMS (Add milestone, Add
+  month, Add risk). A form is not left floating loose next to display panels; it sits in its own
+  Card, same grid-motif, so admin and client both see a clean boxed layout.
+- Panels in a grid row share equal height and align cleanly (per §4.5).
+
+---
+
 ## 5. Component rules (dense product UI)
 
 - **Tables/grids:** right-align numbers (`tabular-nums`), left-align text. Separate rows with

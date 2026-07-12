@@ -2,6 +2,13 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/app/app-shell";
 import { FteRoadmap } from "@/app/fte-roadmap";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PANEL_TITLE } from "@/app/panel-title";
 
 export default async function PortalPage() {
   const supabase = await createClient();
@@ -65,20 +72,25 @@ export default async function PortalPage() {
 
   return (
     <AppShell maxWidth="max-w-4xl">
-      <h1 className="text-3xl font-semibold tracking-tight">{client.name}</h1>
+      <h1 className="text-xl font-semibold tracking-tight">{client.name}</h1>
 
-      <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
-
-      {projectList.length === 0 ? (
-        <p className="mt-4 text-muted-foreground">No projects yet</p>
-      ) : (
-        <FteRoadmap
-          clientId={profile.client_id}
-          projects={projectList}
-          milestones={milestones}
-          allocations={allocations}
-        />
-      )}
+      <Card className="mt-6 rounded-lg border ring-0">
+        <CardHeader>
+          <CardTitle className={PANEL_TITLE}>Roadmap</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {projectList.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No projects yet</p>
+          ) : (
+            <FteRoadmap
+              clientId={profile.client_id}
+              projects={projectList}
+              milestones={milestones}
+              allocations={allocations}
+            />
+          )}
+        </CardContent>
+      </Card>
     </AppShell>
   );
 }

@@ -6,6 +6,14 @@ import { parseDate, todayMidnight, localDateStr } from "@/app/format";
 import { NewClientForm } from "@/app/new-client-form";
 import { ClientBoxControls } from "@/app/client-box-controls";
 import { AppShell } from "@/app/app-shell";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PANEL_TITLE } from "@/app/panel-title";
 
 type DashboardProject = {
   id: string;
@@ -310,16 +318,16 @@ export default async function DashboardPage() {
     .sort((a, b) => a.priority - b.priority || a.name.localeCompare(b.name));
 
   return (
-    <AppShell maxWidth="max-w-2xl">
+    <AppShell maxWidth="max-w-5xl">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Roll-up across all clients and projects.
         </p>
       </div>
 
       {clients.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">No clients yet</p>
+        <p className="mt-6 text-sm text-muted-foreground">No clients yet</p>
       ) : (
         <>
           {/* Global summary strip: at-a-glance counts across all projects */}
@@ -336,84 +344,90 @@ export default async function DashboardPage() {
             />
           </div>
 
-          {/* One box per client */}
-          <div className="mt-8 space-y-6">
+          {/* One card per client, tiled in a balanced grid (§4.5) */}
+          <div className="mt-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
             {clientBoxes.map((box) => (
-              <section key={box.clientId} className="rounded-lg border p-4">
-                {/* Header: large name anchor + inline edit/delete controls */}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <Link
-                    href={`/clients/${box.clientId}`}
-                    className="text-lg font-medium hover:underline"
-                  >
-                    {box.name}
-                  </Link>
-                  <ClientBoxControls
-                    client={{
-                      id: box.clientId,
-                      name: box.name,
-                      contact_email: box.contactEmail,
-                    }}
-                    projectCount={box.projects.length}
-                  />
-                </div>
-
-                {/* Per-client status strip */}
-                <div className="mt-2">
+              <Card key={box.clientId} className="rounded-lg border ring-0">
+                <CardHeader>
+                  <CardTitle className={PANEL_TITLE}>
+                    <Link
+                      href={`/clients/${box.clientId}`}
+                      className="hover:underline"
+                    >
+                      {box.name}
+                    </Link>
+                  </CardTitle>
+                  <CardAction>
+                    <ClientBoxControls
+                      client={{
+                        id: box.clientId,
+                        name: box.name,
+                        contact_email: box.contactEmail,
+                      }}
+                      projectCount={box.projects.length}
+                    />
+                  </CardAction>
+                </CardHeader>
+                <CardContent>
+                  {/* Per-client status strip */}
                   <StatusStrip projects={box.projects} />
-                </div>
 
-                {/* Per-client current-month FTE */}
-                <div className="mt-1">
-                  <FteLine
-                    label="This month:"
-                    planned={box.fte.planned}
-                    actual={box.fte.actual}
-                  />
-                </div>
+                  {/* Per-client current-month FTE */}
+                  <div className="mt-1">
+                    <FteLine
+                      label="This month:"
+                      planned={box.fte.planned}
+                      actual={box.fte.actual}
+                    />
+                  </div>
 
-                {/* Relevant projects */}
-                {box.listed.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    No active projects in the next 2 months
-                  </p>
-                ) : (
-                  <ul className="mt-3 divide-y rounded-lg border">
-                    {box.listed.map((p) => (
-                      <li
-                        key={p.id}
-                        className="flex items-center gap-3 px-4 py-3"
-                      >
-                        <span
-                          aria-hidden
-                          className={`size-2 shrink-0 rounded-full ${
-                            HEALTH_DOT[p.health] ?? "bg-muted-foreground"
-                          }`}
-                        />
-                        <Link
-                          href={`/clients/${box.clientId}/projects/${p.id}`}
-                          className="min-w-0 flex-1 truncate font-medium hover:underline"
+                  {/* Relevant projects */}
+                  {box.listed.length === 0 ? (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      No active projects in the next 2 months
+                    </p>
+                  ) : (
+                    <ul className="mt-3 divide-y rounded-lg border">
+                      {box.listed.map((p) => (
+                        <li
+                          key={p.id}
+                          className="flex items-center gap-3 px-4 py-3"
                         >
-                          {p.name}
-                        </Link>
-                        <span className="shrink-0 text-sm text-muted-foreground">
-                          {STATUS_LABELS[p.status] ?? p.status}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
+                          <span
+                            aria-hidden
+                            className={`size-2 shrink-0 rounded-full ${
+                              HEALTH_DOT[p.health] ?? "bg-muted-foreground"
+                            }`}
+                          />
+                          <Link
+                            href={`/clients/${box.clientId}/projects/${p.id}`}
+                            className="min-w-0 flex-1 truncate font-medium hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                          <span className="shrink-0 text-sm text-muted-foreground">
+                            {STATUS_LABELS[p.status] ?? p.status}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </CardContent>
+              </Card>
             ))}
           </div>
         </>
       )}
 
-      {/* Add client */}
-      <section className="mt-10">
-        <h2 className="text-xl font-medium">Add client</h2>
-        <NewClientForm />
-      </section>
+      {/* Add client — its own titled panel */}
+      <Card className="mt-4 rounded-lg border ring-0">
+        <CardHeader>
+          <CardTitle className={PANEL_TITLE}>Add client</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <NewClientForm />
+        </CardContent>
+      </Card>
     </AppShell>
   );
 }

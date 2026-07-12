@@ -5,6 +5,13 @@ import { AppShell } from "@/app/app-shell";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectRow } from "../../project-row";
 import { FteRoadmap } from "@/app/fte-roadmap";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PANEL_TITLE } from "@/app/panel-title";
 
 export default async function ClientDetailPage({
   params,
@@ -78,41 +85,62 @@ export default async function ClientDetailPage({
         ← Back to clients
       </Link>
 
-      <h1 className="mt-4 text-3xl font-semibold tracking-tight">
+      <h1 className="mt-4 text-xl font-semibold tracking-tight">
         {client.name}
       </h1>
       {client.contact_email ? (
-        <p className="mt-1 text-muted-foreground">{client.contact_email}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {client.contact_email}
+        </p>
       ) : null}
 
-      <h2 className="mt-8 text-xl font-medium">Roadmap</h2>
+      <div className="mt-6 space-y-4">
+        <Card className="rounded-lg border ring-0">
+          <CardHeader>
+            <CardTitle className={PANEL_TITLE}>Roadmap</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {projectList.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No projects yet</p>
+            ) : (
+              <FteRoadmap
+                clientId={id}
+                projects={projectList}
+                milestones={milestones}
+                allocations={allocations}
+                monthsBefore={2}
+                monthsAfter={3}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-      {projectList.length === 0 ? (
-        <p className="mt-4 text-muted-foreground">No projects yet</p>
-      ) : (
-        <FteRoadmap
-          clientId={id}
-          projects={projectList}
-          milestones={milestones}
-          allocations={allocations}
-          monthsBefore={2}
-          monthsAfter={3}
-        />
-      )}
+        <Card className="rounded-lg border ring-0">
+          <CardHeader>
+            <CardTitle className={PANEL_TITLE}>Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!projects || projects.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No projects yet</p>
+            ) : (
+              <ul className="divide-y rounded-lg border">
+                {projects.map((project) => (
+                  <ProjectRow key={project.id} project={project} clientId={id} />
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
-      <h2 className="mt-8 text-xl font-medium">Projects</h2>
-
-      {!projects || projects.length === 0 ? (
-        <p className="mt-4 text-muted-foreground">No projects yet</p>
-      ) : (
-        <ul className="mt-4 divide-y rounded-lg border">
-          {projects.map((project) => (
-            <ProjectRow key={project.id} project={project} clientId={id} />
-          ))}
-        </ul>
-      )}
-
-      <NewProjectForm clientId={id} />
+        <Card className="rounded-lg border ring-0">
+          <CardHeader>
+            <CardTitle className={PANEL_TITLE}>Add project</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <NewProjectForm clientId={id} />
+          </CardContent>
+        </Card>
+      </div>
     </AppShell>
   );
 }
