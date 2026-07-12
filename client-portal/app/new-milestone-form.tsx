@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { createMilestoneAction, type CreateMilestoneState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/app/date-field";
 
 const initialState: CreateMilestoneState = {};
 
@@ -43,17 +44,17 @@ export function NewMilestoneForm({
           placeholder="Design sign-off"
         />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:w-40">
         <label htmlFor="milestone-start" className="text-sm font-medium">
           Start date
         </label>
-        <Input id="milestone-start" name="start_date" type="date" required />
+        <DateField id="milestone-start" name="start_date" required />
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:w-40">
         <label htmlFor="milestone-due" className="text-sm font-medium">
           Due date
         </label>
-        <Input id="milestone-due" name="due_date" type="date" />
+        <DateField id="milestone-due" name="due_date" />
       </div>
       <Button type="submit" disabled={pending}>
         {pending ? "Adding…" : "Add milestone"}

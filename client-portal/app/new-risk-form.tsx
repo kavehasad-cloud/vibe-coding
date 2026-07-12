@@ -4,12 +4,9 @@ import { useActionState, useEffect, useRef } from "react";
 import { createRiskAction, type CreateRiskState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LevelSelect } from "./risk-fields";
 
 const initialState: CreateRiskState = {};
-
-// Native <select> styled to roughly match the Input component.
-const selectClass =
-  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
 
 export function NewRiskForm({
   projectId,
@@ -54,31 +51,13 @@ export function NewRiskForm({
           <label htmlFor="risk-likelihood" className="text-sm font-medium">
             Likelihood
           </label>
-          <select
-            id="risk-likelihood"
-            name="likelihood"
-            defaultValue="low"
-            className={selectClass}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+          <LevelSelect id="risk-likelihood" name="likelihood" />
         </div>
         <div className="flex-1 space-y-1.5">
           <label htmlFor="risk-impact" className="text-sm font-medium">
             Impact
           </label>
-          <select
-            id="risk-impact"
-            name="impact"
-            defaultValue="low"
-            className={selectClass}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+          <LevelSelect id="risk-impact" name="impact" />
         </div>
       </div>
 

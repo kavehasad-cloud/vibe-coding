@@ -18,11 +18,15 @@ const initialState: CreateClientState = {};
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-graphite">
+        {label}
+      </h3>
       {value ? (
-        <p className="mt-1 whitespace-pre-wrap text-sm">{value}</p>
+        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-ink">
+          {value}
+        </p>
       ) : (
-        <p className="mt-1 text-sm text-muted-foreground">Nothing recorded</p>
+        <p className="mt-1.5 text-sm text-slate">Nothing recorded</p>
       )}
     </div>
   );

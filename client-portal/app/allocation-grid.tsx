@@ -45,9 +45,9 @@ function fmt(n: number): string {
 
 function varianceClass(v: number): string {
   const r = round(v);
-  if (r > 0) return "text-red-600"; // over plan
-  if (r < 0) return "text-green-600"; // under plan
-  return "text-muted-foreground";
+  if (r > 0) return "text-rag-red"; // over plan
+  if (r < 0) return "text-rag-green"; // under plan
+  return "text-graphite";
 }
 
 // Admin-editable cell: a pill that swaps to a focused input on click. All
@@ -70,7 +70,7 @@ function EditableCell({
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="rounded-md border px-2 py-1 text-sm tabular-nums hover:bg-muted"
+        className="rounded-md border border-transparent px-2 py-1 text-sm tabular-nums text-ink transition-colors hover:border-platinum hover:bg-ocean-tint/40"
       >
         {fmt(value)}
       </button>
@@ -193,18 +193,18 @@ export function AllocationGrid({
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-              <th className="px-4 py-2 font-medium" />
+            <tr className="border-b text-right text-[11px] font-semibold uppercase tracking-wider text-graphite">
+              <th className="px-4 py-2.5" />
               {rows.map((row) => (
-                <th key={row.id} className="px-4 py-2 text-right font-medium">
+                <th key={row.id} className="px-4 py-2.5">
                   <div className="flex items-center justify-end gap-1.5">
-                    <span>{formatMonth(row.month)}</span>
+                    <span className="tabular-nums">{formatMonth(row.month)}</span>
                     {!readOnly ? (
                       <button
                         type="button"
                         aria-label={`Delete ${formatMonth(row.month)} allocation`}
                         onClick={() => deleteMonth(row)}
-                        className="leading-none text-muted-foreground hover:text-destructive"
+                        className="leading-none text-slate transition-colors hover:text-destructive"
                       >
                         ×
                       </button>
@@ -212,7 +212,7 @@ export function AllocationGrid({
                   </div>
                 </th>
               ))}
-              <th className="px-4 py-2 text-right font-medium">Total</th>
+              <th className="px-4 py-2.5 text-ink">Total</th>
             </tr>
           </thead>
           <tbody className="divide-y">

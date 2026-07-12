@@ -19,3 +19,12 @@ export const HEALTH_STYLES: Record<string, string> = {
   amber: "border-amber-500 bg-amber-50 text-amber-700",
   red: "border-red-500 bg-red-50 text-red-700",
 };
+
+// Human-readable RAG health labels — the meaning behind the colour, so the
+// signal reads without relying on colour alone (accessibility + calm register).
+// Keys match the DB CHECK constraint on projects.health.
+export const HEALTH_LABELS: Record<string, string> = {
+  green: "On track",
+  amber: "At risk",
+  red: "Off track",
+};

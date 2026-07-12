@@ -9,6 +9,7 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DateField } from "@/app/date-field";
 import { parseDate, isoWeek, todayMidnight } from "@/app/format";
 
 type Task = {
@@ -84,13 +85,13 @@ export function GanttChart({
     <div className="mt-4 overflow-x-auto rounded-lg border">
       <div className="min-w-[640px]">
         {/* Axis header: week-start labels across the timeline */}
-        <div className="flex border-b bg-muted/50">
+        <div className="flex border-b bg-ocean-tint/40">
           <div className={NAME_COL} />
           <div className="relative h-8 flex-1">
             {weeks.map((w, i) => (
               <span
                 key={i}
-                className="absolute top-1.5 -translate-x-1/2 text-xs text-muted-foreground"
+                className="absolute top-2 -translate-x-1/2 text-[11px] font-medium tracking-wide text-graphite tabular-nums"
                 style={{ left: `${w.left}%` }}
               >
                 {w.label}
@@ -174,21 +175,16 @@ function GanttRow({
           />
           <div className="flex flex-col gap-2 sm:flex-row">
             <label className="flex flex-1 items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Start</span>
-              <Input
+              <span className="text-graphite">Start</span>
+              <DateField
                 name="start_date"
-                type="date"
                 required
                 defaultValue={task.start_date ?? ""}
               />
             </label>
             <label className="flex flex-1 items-center gap-2 text-sm">
-              <span className="text-muted-foreground">Due</span>
-              <Input
-                name="due_date"
-                type="date"
-                defaultValue={task.due_date ?? ""}
-              />
+              <span className="text-graphite">Due</span>
+              <DateField name="due_date" defaultValue={task.due_date ?? ""} />
             </label>
           </div>
           <div className="flex gap-2">
@@ -226,16 +222,16 @@ function GanttRow({
     );
   }
 
-  // Circle: green check when done, empty otherwise. Interactive for admins,
-  // a static indicator for read-only viewers.
+  // Circle: quiet muted-green check when done, empty hairline ring otherwise.
+  // Interactive for admins, a static indicator for read-only viewers.
   const circleClass = `flex size-5 shrink-0 items-center justify-center rounded-full border text-xs ${
     task.is_done
-      ? "border-green-500 bg-green-50 text-green-700"
-      : "border-muted-foreground/40 text-transparent"
+      ? "border-rag-green bg-rag-green/10 text-rag-green"
+      : "border-platinum text-transparent"
   }`;
 
   return (
-    <div className="flex items-stretch">
+    <div className="group/row flex items-stretch transition-colors hover:bg-ocean-tint/25">
       {/* Toggle + name + admin controls */}
       <div className={`${NAME_COL} flex items-center gap-2 px-4 py-2`}>
         {readOnly ? (
@@ -272,10 +268,10 @@ function GanttRow({
           {task.name}
         </span>
         {!readOnly ? (
-          <>
+          <div className="flex gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               type="button"
               onClick={() => setEditing(true)}
             >
@@ -283,9 +279,10 @@ function GanttRow({
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               type="button"
               disabled={isPending}
+              className="text-graphite hover:text-destructive"
               onClick={() => {
                 startTransition(async () => {
                   await deleteMilestoneAction(task.id, projectPath);
@@ -294,27 +291,30 @@ function GanttRow({
             >
               Delete
             </Button>
-          </>
+          </div>
         ) : null}
       </div>
 
       {/* Timeline cell: gridlines + today line + bar */}
-      <div className="relative flex-1 py-2">
+      <div className="relative flex-1 py-2.5">
         {weeks.map((w, i) => (
           <div
             key={i}
-            className="absolute inset-y-0 border-l border-muted"
+            className="absolute inset-y-0 border-l border-platinum/50"
             style={{ left: `${w.left}%` }}
           />
         ))}
+        {/* Today: a thin ocean marker with a small cap, calm not alarming */}
         <div
-          className="absolute inset-y-0 border-l-2 border-red-400"
+          className="absolute inset-y-0 z-10 border-l border-ocean"
           style={{ left: `${todayLeft}%` }}
-        />
+        >
+          <span className="absolute -top-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-ocean" />
+        </div>
         {bar ? (
           <div
-            className={`absolute top-1/2 h-4 -translate-y-1/2 rounded ${
-              task.is_done ? "bg-green-500/70" : "bg-blue-500"
+            className={`absolute top-1/2 h-2.5 -translate-y-1/2 rounded-[3px] ${
+              task.is_done ? "bg-sage/70" : "bg-ocean"
             }`}
             style={{ left: `${bar.left}%`, width: `${bar.width}%` }}
             title={task.name}

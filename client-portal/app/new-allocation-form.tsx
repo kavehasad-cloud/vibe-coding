@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { createAllocationAction, type CreateAllocationState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MonthField } from "@/app/month-field";
 
 const initialState: CreateAllocationState = {};
 
@@ -33,11 +34,16 @@ export function NewAllocationForm({
       <input type="hidden" name="project_id" value={projectId} />
       <input type="hidden" name="project_path" value={projectPath} />
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 sm:w-40">
         <label htmlFor="allocation-month" className="text-sm font-medium">
           Month
         </label>
-        <Input id="allocation-month" name="month" type="month" required />
+        <MonthField
+          id="allocation-month"
+          name="month"
+          required
+          fallbackYear={new Date().getFullYear()}
+        />
       </div>
 
       <div className="space-y-1.5">

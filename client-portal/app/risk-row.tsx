@@ -8,6 +8,8 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RagBadge } from "./rag";
+import { LevelSelect, SEVERITY_LABEL } from "./risk-fields";
 import { riskRag } from "./risk-rag";
 
 type Risk = {
@@ -17,17 +19,6 @@ type Risk = {
   impact: string;
   mitigation: string | null;
 };
-
-// Same green/amber/red badge classes used for project health.
-const RAG_STYLES: Record<string, string> = {
-  green: "border-green-500 bg-green-50 text-green-700",
-  amber: "border-amber-500 bg-amber-50 text-amber-700",
-  red: "border-red-500 bg-red-50 text-red-700",
-};
-
-// Native <select> styled to match the Input component (mirrors new-risk-form).
-const selectClass =
-  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
 
 const initialState: CreateRiskState = {};
 
@@ -73,28 +64,12 @@ export function RiskRow({
             />
             <div className="flex flex-col gap-2 sm:flex-row">
               <label className="flex flex-1 items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Likelihood</span>
-                <select
-                  name="likelihood"
-                  defaultValue={risk.likelihood}
-                  className={selectClass}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
+                <span className="text-graphite">Likelihood</span>
+                <LevelSelect name="likelihood" defaultValue={risk.likelihood} />
               </label>
               <label className="flex flex-1 items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Impact</span>
-                <select
-                  name="impact"
-                  defaultValue={risk.impact}
-                  className={selectClass}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
+                <span className="text-graphite">Impact</span>
+                <LevelSelect name="impact" defaultValue={risk.impact} />
               </label>
             </div>
             <Input
@@ -125,26 +100,20 @@ export function RiskRow({
   }
 
   return (
-    <tr>
-      <td className="px-4 py-3 align-top font-medium">{risk.description}</td>
-      <td className="px-4 py-3 align-top">
-        <span
-          className={`inline-block rounded-md border px-2 py-1 text-xs capitalize ${
-            RAG_STYLES[rag] ?? ""
-          }`}
-        >
-          {rag}
-        </span>
+    <tr className="group/row align-top">
+      <td className="px-4 py-3 font-medium text-ink">{risk.description}</td>
+      <td className="px-4 py-3">
+        <RagBadge rag={rag} label={SEVERITY_LABEL[rag] ?? rag} />
       </td>
-      <td className="px-4 py-3 align-top text-muted-foreground">
+      <td className="px-4 py-3 text-graphite">
         {risk.mitigation ? risk.mitigation : "—"}
       </td>
       {!readOnly ? (
-        <td className="px-4 py-3 align-top">
-          <div className="flex gap-2">
+        <td className="px-4 py-3 text-right">
+          <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               type="button"
               onClick={() => setEditing(true)}
             >
@@ -152,9 +121,10 @@ export function RiskRow({
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               type="button"
               disabled={isPending}
+              className="text-graphite hover:text-destructive"
               onClick={() => {
                 startTransition(async () => {
                   await deleteRiskAction(risk.id, projectPath);
