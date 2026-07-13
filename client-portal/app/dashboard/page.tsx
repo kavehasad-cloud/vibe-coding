@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
+import { PageHeader } from "@/app/page-header";
 
 type DashboardProject = {
   id: string;
@@ -319,12 +320,10 @@ export default async function DashboardPage() {
 
   return (
     <AppShell maxWidth="max-w-5xl">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Roll-up across all clients and projects.
-        </p>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Roll-up across all clients and projects."
+      />
 
       {clients.length === 0 ? (
         <p className="mt-6 text-sm text-muted-foreground">No clients yet</p>

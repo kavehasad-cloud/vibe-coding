@@ -1,6 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 import { AppShell } from "@/app/app-shell";
 import { NewProjectForm } from "../../new-project-form";
 import { ProjectRow } from "../../project-row";
@@ -12,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
+import { PageHeader } from "@/app/page-header";
 
 export default async function ClientDetailPage({
   params,
@@ -81,18 +81,12 @@ export default async function ClientDetailPage({
 
   return (
     <AppShell maxWidth="max-w-4xl">
-      <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        ← Back to clients
-      </Link>
-
-      <h1 className="mt-4 text-xl font-semibold tracking-tight">
-        {client.name}
-      </h1>
-      {client.contact_email ? (
-        <p className="mt-1 text-sm text-muted-foreground">
-          {client.contact_email}
-        </p>
-      ) : null}
+      <PageHeader
+        backHref="/"
+        backLabel="Back to clients"
+        title={client.name}
+        subtitle={client.contact_email}
+      />
 
       <div className="mt-6 space-y-4">
         <Card className={PANEL}>

@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
+import { PageHeader } from "@/app/page-header";
 
 export default async function PortalPage() {
   const supabase = await createClient();
@@ -72,7 +73,7 @@ export default async function PortalPage() {
 
   return (
     <AppShell maxWidth="max-w-4xl">
-      <h1 className="text-xl font-semibold tracking-tight">{client.name}</h1>
+      <PageHeader title={client.name} />
 
       <Card className={`mt-6 ${PANEL}`}>
         <CardHeader className={PANEL_HEADER}>
