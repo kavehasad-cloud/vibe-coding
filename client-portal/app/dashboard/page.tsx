@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PANEL_TITLE } from "@/app/panel-title";
+import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
 
 type DashboardProject = {
   id: string;
@@ -347,8 +347,8 @@ export default async function DashboardPage() {
           {/* One card per client, tiled in a balanced grid (§4.5) */}
           <div className="mt-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
             {clientBoxes.map((box) => (
-              <Card key={box.clientId} className="rounded-lg border ring-0">
-                <CardHeader>
+              <Card key={box.clientId} className={PANEL}>
+                <CardHeader className={PANEL_HEADER}>
                   <CardTitle className={PANEL_TITLE}>
                     <Link
                       href={`/clients/${box.clientId}`}
@@ -420,8 +420,8 @@ export default async function DashboardPage() {
       )}
 
       {/* Add client — its own titled panel */}
-      <Card className="mt-4 rounded-lg border ring-0">
-        <CardHeader>
+      <Card className={`mt-4 ${PANEL}`}>
+        <CardHeader className={PANEL_HEADER}>
           <CardTitle className={PANEL_TITLE}>Add client</CardTitle>
         </CardHeader>
         <CardContent>
