@@ -38,9 +38,9 @@ export default function LoginPage() {
             <img
               src="/brand/EDON_gridmark_navy.svg"
               alt=""
-              className="size-12"
+              className="size-20"
             />
-            <h1 className="mt-5 text-xl font-semibold tracking-tight text-ink">
+            <h1 className="mt-4 text-xl font-semibold tracking-tight text-ink">
               EDON ERP
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -48,7 +48,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <Card className={`mt-8 ${PANEL}`}>
+          <Card className={`mt-10 ${PANEL}`}>
             <CardContent>
               <form className="space-y-4">
                 <div className="space-y-1.5">

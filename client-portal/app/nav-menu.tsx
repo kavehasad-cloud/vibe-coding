@@ -32,7 +32,7 @@ export function NavMenu({ items }: { items: NavItem[] }) {
               <NavigationMenuLink
                 asChild
                 active={active}
-                className="px-3 py-1.5 text-sm font-medium text-graphite transition-colors hover:bg-ocean-tint hover:text-ink data-active:bg-ocean-tint data-active:text-ink"
+                className="rounded-none border-b-2 border-transparent px-1 pt-1.5 pb-1 text-sm text-muted-foreground transition-colors hover:bg-transparent hover:text-ink focus:bg-transparent data-active:border-ocean data-active:bg-transparent data-active:font-medium data-active:text-ink"
               >
                 <Link href={item.href}>{item.label}</Link>
               </NavigationMenuLink>

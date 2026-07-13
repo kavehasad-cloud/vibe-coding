@@ -20,7 +20,7 @@ export async function NavBar() {
 
   return (
     <nav className="flex h-13 w-full items-center justify-between border-b px-6">
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8">
         <Link href={homeHref} aria-label="EDON — Home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
