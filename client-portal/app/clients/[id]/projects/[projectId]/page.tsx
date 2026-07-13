@@ -16,14 +16,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { STATUS_LABELS, HEALTH_LABELS } from "@/app/status-labels";
-import { PANEL_TITLE } from "@/app/panel-title";
+import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
 import { RagBadge } from "@/app/rag";
-
-// One card language everywhere: hairline platinum outline, one radius, no ring,
-// no shadow (DESIGN §4.7). A hairline divider under each header separates the
-// tracked-caps title from its content without adding weight.
-const PANEL = "rounded-lg border ring-0";
-const PANEL_HEADER = "border-b !pb-3";
 
 export default async function ProjectDetailPage({
   params,

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PANEL_TITLE } from "@/app/panel-title";
+import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
 
 export default async function PortalPage() {
   const supabase = await createClient();
@@ -74,8 +74,8 @@ export default async function PortalPage() {
     <AppShell maxWidth="max-w-4xl">
       <h1 className="text-xl font-semibold tracking-tight">{client.name}</h1>
 
-      <Card className="mt-6 rounded-lg border ring-0">
-        <CardHeader>
+      <Card className={`mt-6 ${PANEL}`}>
+        <CardHeader className={PANEL_HEADER}>
           <CardTitle className={PANEL_TITLE}>Roadmap</CardTitle>
         </CardHeader>
         <CardContent>

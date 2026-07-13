@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PANEL_TITLE } from "@/app/panel-title";
+import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
 
 export default async function ClientDetailPage({
   params,
@@ -95,8 +95,8 @@ export default async function ClientDetailPage({
       ) : null}
 
       <div className="mt-6 space-y-4">
-        <Card className="rounded-lg border ring-0">
-          <CardHeader>
+        <Card className={PANEL}>
+          <CardHeader className={PANEL_HEADER}>
             <CardTitle className={PANEL_TITLE}>Roadmap</CardTitle>
           </CardHeader>
           <CardContent>
@@ -115,8 +115,8 @@ export default async function ClientDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="rounded-lg border ring-0">
-          <CardHeader>
+        <Card className={PANEL}>
+          <CardHeader className={PANEL_HEADER}>
             <CardTitle className={PANEL_TITLE}>Projects</CardTitle>
           </CardHeader>
           <CardContent>
@@ -132,8 +132,8 @@ export default async function ClientDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="rounded-lg border ring-0">
-          <CardHeader>
+        <Card className={PANEL}>
+          <CardHeader className={PANEL_HEADER}>
             <CardTitle className={PANEL_TITLE}>Add project</CardTitle>
           </CardHeader>
           <CardContent>

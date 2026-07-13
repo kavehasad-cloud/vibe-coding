@@ -31,14 +31,14 @@ type Allocation = {
 // (bordered badges), same idea as the dashboard's HEALTH_DOT. not_started or an
 // unknown health falls back to neutral gray.
 const BAR_FILL: Record<string, string> = {
-  green: "bg-green-500",
-  amber: "bg-amber-500",
-  red: "bg-red-500",
+  green: "bg-rag-green",
+  amber: "bg-rag-amber",
+  red: "bg-rag-red",
 };
 
 function barFill(project: Project): string {
-  if (project.status === "not_started") return "bg-gray-300";
-  return BAR_FILL[project.health] ?? "bg-gray-300";
+  if (project.status === "not_started") return "bg-rag-neutral";
+  return BAR_FILL[project.health] ?? "bg-rag-neutral";
 }
 
 // FTE with at most one decimal ("2", "1.5") — mirrors the dashboard's formatFte.
@@ -56,8 +56,8 @@ function round2(n: number): number {
 // (positive) is red, under planned (negative) is green, on-plan is muted.
 function varianceClass(v: number): string {
   const r = round2(v);
-  if (r > 0) return "text-red-600";
-  if (r < 0) return "text-green-600";
+  if (r > 0) return "text-rag-red";
+  if (r < 0) return "text-rag-green";
   return "text-muted-foreground";
 }
 

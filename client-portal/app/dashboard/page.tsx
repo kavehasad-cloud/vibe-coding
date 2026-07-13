@@ -34,9 +34,9 @@ type ClientRecord = {
 // Solid traffic-light dot fills, keyed by RAG health. Distinct from HEALTH_STYLES
 // (bordered badges); this is the dot variant already used by the summary strip.
 const HEALTH_DOT: Record<string, string> = {
-  green: "bg-green-500",
-  amber: "bg-amber-500",
-  red: "bg-red-500",
+  green: "bg-rag-green",
+  amber: "bg-rag-amber",
+  red: "bg-rag-red",
 };
 
 // The project list only surfaces work that is live or about to start; completed
@@ -134,7 +134,7 @@ function FteLine({
         <span className="text-muted-foreground">actual FTE</span>
       </span>
       <span className="text-muted-foreground">·</span>
-      <span className={diff > 0 ? "text-red-700" : "text-green-700"}>
+      <span className={diff > 0 ? "text-rag-red" : "text-rag-green"}>
         {sign}
         {formatFte(Math.abs(diff))} FTE
       </span>
@@ -396,7 +396,7 @@ export default async function DashboardPage() {
                           <span
                             aria-hidden
                             className={`size-2 shrink-0 rounded-full ${
-                              HEALTH_DOT[p.health] ?? "bg-muted-foreground"
+                              HEALTH_DOT[p.health] ?? "bg-rag-neutral"
                             }`}
                           />
                           <Link

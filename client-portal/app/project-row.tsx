@@ -111,7 +111,12 @@ export function ProjectRow({
         >
           <input type="hidden" name="id" value={project.id} />
           <input type="hidden" name="client_id" value={clientId} />
-          <Button size="sm" variant="outline" type="submit">
+          <Button
+            size="sm"
+            variant="outline"
+            type="submit"
+            className="text-graphite hover:text-destructive"
+          >
             Delete
           </Button>
         </form>
