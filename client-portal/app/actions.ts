@@ -259,6 +259,40 @@ export async function updateProjectSummaryAction(
   return { success: true };
 }
 
+export async function updateProjectDetailsAction(
+  _prevState: CreateClientState,
+  formData: FormData
+): Promise<CreateClientState> {
+  const { supabase, error: authError } = await requireAdmin();
+  if (authError) return { error: authError };
+
+  const id = String(formData.get("id") ?? "");
+  const projectPath = String(formData.get("project_path") ?? "");
+
+  if (!id) {
+    return { error: "Missing project id." };
+  }
+
+  // All three are optional free text; store null when blank to keep the
+  // nullable columns clean rather than empty strings.
+  const code = String(formData.get("code") ?? "").trim() || null;
+  const pm = String(formData.get("pm") ?? "").trim() || null;
+  const sponsor = String(formData.get("sponsor") ?? "").trim() || null;
+
+  // RLS enforces ownership on update; no manual owner filter.
+  const { error } = await supabase
+    .from("projects")
+    .update({ code, pm, sponsor })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (projectPath) revalidatePath(projectPath);
+  return { success: true };
+}
+
 export async function deleteProjectAction(formData: FormData) {
   const { supabase, error: authError } = await requireAdmin();
   if (authError) return;

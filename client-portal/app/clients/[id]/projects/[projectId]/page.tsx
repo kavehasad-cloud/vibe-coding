@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ExecSummary } from "../../../../exec-summary";
+import { StatusPulseDetails } from "../../../../status-pulse-details";
 import { GanttChart } from "../../../../gantt-chart";
 import { NewMilestoneForm } from "../../../../new-milestone-form";
 import { AllocationGrid } from "../../../../allocation-grid";
@@ -15,9 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { STATUS_LABELS, HEALTH_LABELS } from "@/app/status-labels";
 import { PANEL_TITLE, PANEL, PANEL_HEADER } from "@/app/panel-title";
-import { RagBadge } from "@/app/rag";
 
 export default async function ProjectDetailPage({
   params,
@@ -46,7 +45,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("name, status, health, client_id, summary, asks, issues")
+    .select("name, status, health, client_id, summary, asks, issues, code, pm, sponsor")
     .eq("id", projectId)
     .single();
 
@@ -59,9 +58,6 @@ export default async function ProjectDetailPage({
   if (project.client_id !== id) {
     notFound();
   }
-
-  const showHealth =
-    project.status === "active" || project.status === "on_hold";
 
   const { data: milestones } = await supabase
     .from("milestones")
@@ -98,46 +94,25 @@ export default async function ProjectDetailPage({
       </Link>
 
       <div className="mt-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
-        {/* Block 1 — Status & Pulse */}
-        <Card className={PANEL}>
-          <CardHeader className={PANEL_HEADER}>
-            <CardTitle className={PANEL_TITLE}>Status &amp; Pulse</CardTitle>
-          </CardHeader>
+        {/* Block 1 — Identity header band (full-width, no section title) */}
+        <Card className={`${PANEL} lg:col-span-2`}>
           <CardContent>
-            <div className="flex items-start justify-between gap-3">
-              <h1 className="text-xl leading-tight font-semibold tracking-tight text-ink">
-                {project.name}
-              </h1>
-              {showHealth ? (
-                <RagBadge
-                  rag={project.health}
-                  label={HEALTH_LABELS[project.health] ?? project.health}
-                />
-              ) : null}
-            </div>
-            <p className="mt-1.5 text-sm text-graphite">
-              {STATUS_LABELS[project.status] ?? project.status}
-            </p>
-            <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t pt-4">
-              {[
-                ["Code", "—"],
-                ["PM", "—"],
-                ["Sponsor", "—"],
-                ["Trend", "—"],
-              ].map(([label, value]) => (
-                <div key={label} className="flex flex-col gap-0.5">
-                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-graphite">
-                    {label}
-                  </dt>
-                  <dd className="text-sm tabular-nums text-ink">{value}</dd>
-                </div>
-              ))}
-            </dl>
+            <StatusPulseDetails
+              projectId={projectId}
+              projectPath={projectPath}
+              name={project.name}
+              status={project.status}
+              health={project.health}
+              code={project.code}
+              pm={project.pm}
+              sponsor={project.sponsor}
+              readOnly={!isAdmin}
+            />
           </CardContent>
         </Card>
 
-        {/* Block 2 — Executive Summary */}
-        <Card className={PANEL}>
+        {/* Block 2 — Executive Summary (full-width, below the identity band) */}
+        <Card className={`${PANEL} lg:col-span-2`}>
           <CardHeader className={PANEL_HEADER}>
             <CardTitle className={PANEL_TITLE}>Executive Summary</CardTitle>
           </CardHeader>
