@@ -2,9 +2,41 @@
 
 A running log of significant product & architecture decisions and WHY we made them — so changes are deliberate choices, not silent drift.
 
-Last updated: 2026-07-08
+Visual/design decisions: see `DESIGN.md` at repo root — the binding design spec (wired via `CLAUDE.md`). ADRs here record design *decisions* + rationale and point to it rather than duplicating it.
+
+Last updated: 2026-07-14
 
 ---
+
+## 2026-07-13 — Tame RAG to the muted `rag-*` register; "colour on a dot, never a fill" as core visual law
+**Decision:** Retuned the RAG status colours to a muted `rag-*` token register and codified the governing rule: **colour appears on a small dot or thin accent, never as a background fill or tinted text.** Health is now rendered as a `rag-dot` + Ink label (not a coloured pill or coloured text), and the native health `<select>` was replaced with the shadcn `Select`.
+**Why:** Per DESIGN.md §6, RAG is a functional signal that must stay quiet inside the Deep-ocean-and-neutral world — loud colour fields fight the brand's calm. A dot/accent carries the same meaning at a fraction of the visual weight, and moving health to a `rag-dot` + Ink label keeps status legible without colouring the text. Swapping the native select to shadcn keeps the control consistent with the remapped token system (2026-07-12).
+**Status:** Done.
+
+## 2026-07-13 — Shared app chrome: AppShell + single-source-of-truth UI modules
+**Decision:** Introduced an `AppShell` that wraps every authenticated page with one nav + one footer, and extracted the shared chrome into single-source-of-truth modules: `panel-title.ts` (the `PANEL` / `PANEL_HEADER` treatments), `Footer`, `PageHeader`, and `nav-menu`. Pages compose these rather than hand-rolling their own frame.
+**Why:** Per DESIGN.md §4.6/§4.7, the top bar and panel language must be identical on every page — one constant frame, zero per-page variation. Extracting them (same single-source-of-truth principle as `status-labels.ts` / `format.ts`) means the nav, footer, and panel-title treatment are defined once and can't drift across pages.
+**Status:** Done.
+
+## 2026-07-12 — Remap shadcn semantic tokens to the EDON palette
+**Decision:** Remapped shadcn's design tokens (background, foreground, primary, border, ring, muted, etc.) to the EDON palette centrally, so every shadcn component inherits the brand from one place — one accent = Deep ocean `#1f3047` — rather than overriding colours per component.
+**Why:** Per-component colour overrides would fork and drift, and would fight DESIGN.md's "one accent" law. Remapping the semantic tokens once means primary actions, focus rings, borders and fills all resolve to the locked palette automatically; new shadcn components land on-brand with no extra work.
+**Status:** Done.
+
+## 2026-07-12 — Adopt the EDON brand identity as the app's design system
+**Decision:** Adopted the locked EDON brand identity as the app's design system. `DESIGN.md` (wired into context via `CLAUDE.md`) is the **binding, living spec**: light-dominant, one Deep-ocean accent, Manrope typography, no shadows, no gradients, generous space, dense product UI. This ADR records the **decision + rationale**; the operational rules live in `DESIGN.md` and are not duplicated here.
+**Why:** The MVP shipped on default shadcn styling, deferred by design-notes.md as a later hi-fi pass. Committing to one written, enforced spec (rather than ad-hoc per-screen styling) is what makes the app read as one system and keeps future UI on-brand. Keeping the rules in `DESIGN.md` and only the decision here avoids the two copies drifting.
+**Status:** Done. `DESIGN.md` is the source of truth; the design pass was executed across Days 24–26.
+
+## 2026-07-11 — Backend audit fixes: admin gate on client detail + delete-cascade confirmation
+**Decision:** Fixed the two audit findings that were in-scope: added an admin role-gate on `/clients/[id]` (finding **H2**) so a client login can't reach the admin client-detail page, and added a confirmation to the project-delete cascade (findings **M3 / L1**) that names the blast radius before destroying a project and its milestones/risks.
+**Why:** H2 was a real authorization hole — hiding the link isn't a control (same principle as the 2026-06-30 `requireAdmin()` ADR). The delete confirmation prevents an irreversible cascade from one mis-click. Explicitly **deferred (not done):** the C1 signup model, the migrations-in-git gap, DB `CHECK` constraints, and email validation — parked launch-hardening items, tracked but out of scope for this pass.
+**Status:** Done (H2, M3/L1). C1 / migrations / CHECK constraints / email validation deferred.
+
+## 2026-07-11 — Configurable roadmap window; one `fte-roadmap` component on both surfaces
+**Decision:** Made the FTE roadmap's month window configurable via optional `monthsBefore` / `monthsAfter` props, so the **same** `fte-roadmap` component renders on `/portal` (4-month window) and `/clients/[id]` (6-month window) with no fork.
+**Why:** The two surfaces want different horizons but identical behaviour and rendering; a second copy would drift (same single-source-of-truth reasoning as the earlier extractions). Props-with-defaults keep one component as the source of truth while letting each page pick its window.
+**Status:** Done.
 
 ## 2026-07-08 — Shared role-aware NavBar; `logout()` + `getSessionRole()` in `app/auth.ts`
 **Decision:** Extracted the duplicated inline `logout()` (copied in `dashboard/page.tsx` and `portal/page.tsx`) into one shared server action in `app/auth.ts`, alongside a `getSessionRole()` helper returning `{ role, homeHref }`. Added a single role-aware `NavBar` (home link → `homeHref`, shared Log out) at the top of all four authenticated pages (dashboard, portal, client detail, project scorecard), removing both inline logout copies. Chose **approach A**: `NavBar` self-fetches the session role rather than taking it as a prop.
@@ -38,7 +70,7 @@ variance is the resource-health signal now, so the manual badge was redundant.
 
 ## 2026-07-04 — Extract shared date helpers into `app/format.ts`
 **Decision:** Moved the shared date helpers (`parseDate`, `localDateStr`, `formatShort`, `todayMidnight`, `formatFull`) into `app/format.ts` as the single source of truth.
-**Why:** These helpers (esp. the local-parts UTC-shift guard) were triplicated across `dashboard/page.tsx`, `gantt-chart.tsx`, and `milestone-row.tsx`, each commented as "mirrors the others" — exactly the drift risk ADRs #8 and #9 were created to prevent. `format.ts` already existed as the home for shared formatting. Note: `formatFull` was kept distinct from `formatShort` because milestone-row's date renders WITH the year; collapsing them would have silently dropped it.
+**Why:** These helpers (esp. the local-parts UTC-shift guard) were triplicated across `dashboard/page.tsx`, `gantt-chart.tsx`, and `milestone-row.tsx`, each commented as "mirrors the others" — exactly the drift risk the `status-labels.ts` (ADR 2026-07-02) and `formatCurrency` (ADR 2026-07-03) extractions were created to prevent. `format.ts` already existed as the home for shared formatting. Note: `formatFull` was kept distinct from `formatShort` because milestone-row's date renders WITH the year; collapsing them would have silently dropped it.
 **Status:** Done (this slice).
 
 ## 2026-07-03 — Extract formatCurrency into a shared module

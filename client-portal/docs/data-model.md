@@ -1,6 +1,6 @@
 # Client Portal — Data Model
 
-*Last updated: 2026-07-06 · Status: reflects live schema through Day 21.*
+*Last updated: 2026-07-14 · Status: reflects live schema through Day 26.*
 
 The blueprint of what the app actually stores and how it connects.
 *(GitHub renders the diagram below automatically.)*
@@ -191,6 +191,10 @@ by the additive viewer SELECT policies that walk
 - `/dashboard` is the **admin home** and hosts client CRUD (add / edit / delete),
   rendered client-first as one box per client. Login and signup land here.
 - `/portal` is the client login's read-only home.
+- The **FTE roadmap** (built from `allocations`) renders on **both** `/portal` (4-month
+  window) and `/clients/[id]` (6-month window) from the **same component** — the window is
+  a prop, not a fork. No schema difference between the two surfaces; both read the same
+  `allocations` rows filtered by RLS.
 - ⚠️ **Destructive behavior:** deleting a client from the dashboard cascades in the
   DB (`ON DELETE CASCADE`) to that client's **projects**, and each project to its
   **milestones** and **risks** — all removed in one action. The UI guards this with

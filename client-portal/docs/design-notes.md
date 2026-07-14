@@ -11,13 +11,18 @@ look) is deliberately deferred to a later hi-fi pass.
 
 ## The screens, and how you move between them
 
-The MVP is four screens deep — a simple drill-down:
+The app is a simple drill-down:
 
-> Log in → **Clients list** (home) → click a client → **Client detail** (that
+> Log in → **Dashboard** (home) → click a client → **Client detail** (that
 > client's projects) → click a project → **Project detail** (the scorecard).
 
-Two forms branch off: *add/edit client* (from the clients list) and *add/edit
-project* (from a client).
+> **Note (superseded):** this originally read "Clients list (home)". Per the
+> 2026-07-04 ADR, `/dashboard` is now the home — client-first, one box per client,
+> hosting client CRUD — and the standalone clients list at `/` was retired (`/`
+> redirects to `/dashboard`). See `docs/decisions.md`.
+
+Two forms branch off: *add/edit client* and *add/edit project* — both now reached
+from the dashboard / a client box rather than a separate clients list.
 
 ---
 
@@ -76,13 +81,21 @@ rendering it for both a red/in-trouble project and a grey/upcoming one.
 
 ---
 
-## Deferred on purpose
+## Hi-fi / branding — DELIVERED (Days 24–26)
 - **Hi-fi / branding:** fonts, color palette, exact RAG saturation, logo, icons,
-  imagery — a later Design pass.
+  imagery — was deferred here to a later Design pass; that pass is now **delivered**
+  (Days 24–26). The app adopted the **EDON brand identity** as its design system.
+  - **The spec:** see `DESIGN.md` at repo root — the binding, living design spec
+    (Manrope type, one Deep-ocean accent, no shadows/gradients, muted RAG). Not
+    duplicated here.
+  - **The decisions:** see `docs/decisions.md` (ADRs 2026-07-12 EDON adoption +
+    shadcn token remap, 2026-07-13 AppShell/shared chrome + muted RAG register).
 - **The asset question** (icon libraries vs AI images vs logo tools vs video) —
-  covered when we do hi-fi.
-- **Remaining wireframes:** login, clients list, the two add/edit forms, the
-  dashboard of color blocks — all simple/standard, quick to draw when needed.
+  resolved as part of that pass; the outcome lives in `DESIGN.md`.
+- **Remaining wireframes:** login, the two add/edit forms, the dashboard of color
+  blocks (now the home) — all simple/standard, quick to draw when needed. (The
+  standalone clients list was retired per the 2026-07-04 ADR — `/` redirects to
+  `/dashboard`.)
 
 ---
 
