@@ -65,38 +65,56 @@ function StatusStrip({ projects }: { projects: DashboardProject[] }) {
   const amberCount = live.filter((p) => p.health === "amber").length;
   const redCount = live.filter((p) => p.health === "red").length;
 
+  // Bar segments only when there's a live set to divide; sums to live.length so
+  // the three widths total 100% with no "other" remainder. Zero-live → empty track.
+  const pct = (n: number) => (live.length ? (n / live.length) * 100 : 0);
+
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <span>
-        <span className="font-medium">{total}</span>{" "}
-        <span className="text-muted-foreground">projects</span>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span>
-        <span className="font-medium">{live.length}</span>{" "}
-        <span className="text-muted-foreground">live</span>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span>
-        <span className="font-medium">{activeCount}</span>{" "}
-        <span className="text-muted-foreground">active</span>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span className="flex items-center gap-1.5">
-        <span className={`size-2 rounded-full ${HEALTH_DOT.green}`} />
-        <span className="font-medium">{greenCount}</span>{" "}
-        <span className="text-muted-foreground">green</span>
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className={`size-2 rounded-full ${HEALTH_DOT.amber}`} />
-        <span className="font-medium">{amberCount}</span>{" "}
-        <span className="text-muted-foreground">amber</span>
-      </span>
-      <span className="flex items-center gap-1.5">
-        <span className={`size-2 rounded-full ${HEALTH_DOT.red}`} />
-        <span className="font-medium">{redCount}</span>{" "}
-        <span className="text-muted-foreground">red</span>
-      </span>
+    <div>
+      {/* Context counts — the plain facts, kept as text */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <span>
+          <span className="font-medium">{total}</span>{" "}
+          <span className="text-muted-foreground">projects</span>
+        </span>
+        <span className="text-muted-foreground">·</span>
+        <span>
+          <span className="font-medium">{live.length}</span>{" "}
+          <span className="text-muted-foreground">live</span>
+        </span>
+        <span className="text-muted-foreground">·</span>
+        <span>
+          <span className="font-medium">{activeCount}</span>{" "}
+          <span className="text-muted-foreground">active</span>
+        </span>
+      </div>
+
+      {/* RAG proportion of the live set — instant shape. Thin, muted, on a mist
+          track; empty track when nothing is live. */}
+      <div className="mt-1.5 flex h-1.5 w-full overflow-hidden rounded-full bg-mist">
+        <div className={HEALTH_DOT.green} style={{ width: `${pct(greenCount)}%` }} />
+        <div className={HEALTH_DOT.amber} style={{ width: `${pct(amberCount)}%` }} />
+        <div className={HEALTH_DOT.red} style={{ width: `${pct(redCount)}%` }} />
+      </div>
+
+      {/* Legend — the numbers behind the bar (dot + count, no tinted text) */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+        <span className="flex items-center gap-1.5">
+          <span className={`size-1.5 rounded-full ${HEALTH_DOT.green}`} />
+          <span className="font-medium">{greenCount}</span>{" "}
+          <span className="text-muted-foreground">green</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className={`size-1.5 rounded-full ${HEALTH_DOT.amber}`} />
+          <span className="font-medium">{amberCount}</span>{" "}
+          <span className="text-muted-foreground">amber</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className={`size-1.5 rounded-full ${HEALTH_DOT.red}`} />
+          <span className="font-medium">{redCount}</span>{" "}
+          <span className="text-muted-foreground">red</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -122,23 +140,47 @@ function FteLine({
 }) {
   const diff = actual - planned;
   const sign = diff > 0 ? "+" : diff < 0 ? "−" : "";
+  // Both bars scale to the larger value so planned/actual are directly comparable.
+  // max 0 (no allocation this month) → both bars empty, no divide-by-zero.
+  const max = Math.max(planned, actual);
+  const width = (n: number) => (max ? (n / max) * 100 : 0);
+
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span>
-        <span className="font-medium">{formatFte(planned)}</span>{" "}
-        <span className="text-muted-foreground">planned FTE</span>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span>
-        <span className="font-medium">{formatFte(actual)}</span>{" "}
-        <span className="text-muted-foreground">actual FTE</span>
-      </span>
-      <span className="text-muted-foreground">·</span>
-      <span className={diff > 0 ? "text-rag-red" : "text-rag-green"}>
-        {sign}
-        {formatFte(Math.abs(diff))} FTE
-      </span>
+    <div className="space-y-1">
+      {/* Label + variance (variance keeps the over/under rag rule) */}
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={diff > 0 ? "text-rag-red" : "text-rag-green"}>
+          {sign}
+          {formatFte(Math.abs(diff))} FTE
+        </span>
+      </div>
+
+      {/* Planned (ocean) vs actual (sage) — two thin bars on a shared mist track */}
+      <div className="flex items-center gap-2 text-xs">
+        <span className="w-14 shrink-0 text-muted-foreground">Planned</span>
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-mist">
+          <span
+            className="block h-full rounded-full bg-ocean"
+            style={{ width: `${width(planned)}%` }}
+          />
+        </span>
+        <span className="w-8 shrink-0 text-right font-medium tabular-nums">
+          {formatFte(planned)}
+        </span>
+      </div>
+      <div className="flex items-center gap-2 text-xs">
+        <span className="w-14 shrink-0 text-muted-foreground">Actual</span>
+        <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-mist">
+          <span
+            className="block h-full rounded-full bg-sage"
+            style={{ width: `${width(actual)}%` }}
+          />
+        </span>
+        <span className="w-8 shrink-0 text-right font-medium tabular-nums">
+          {formatFte(actual)}
+        </span>
+      </div>
     </div>
   );
 }
