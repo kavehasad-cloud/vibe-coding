@@ -7,29 +7,14 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { STATUS_LABELS, HEALTH_LABELS } from "@/app/status-labels";
 import {
-  CircleDashed,
-  Activity,
-  PauseCircle,
-  CheckCircle2,
-  XCircle,
-  Circle,
-  type LucideIcon,
-} from "lucide-react";
+  STATUS_LABELS,
+  HEALTH_LABELS,
+  STATUS_ICONS,
+  STATUS_ICON_FALLBACK,
+} from "@/app/status-labels";
 
 const initialState: CreateClientState = {};
-
-// Monochrome status glyphs — colour stays reserved for the RAG health dot
-// (DESIGN §6), so lifecycle is carried by icon shape + neutral ink, never hue.
-// Every projects.status value maps here; unknown values fall back to Circle.
-const STATUS_ICONS: Record<string, LucideIcon> = {
-  not_started: CircleDashed,
-  active: Activity,
-  on_hold: PauseCircle,
-  completed: CheckCircle2,
-  cancelled: XCircle,
-};
 
 // The header band's RAG circle — the one place colour lands (DESIGN §6). These
 // are the app's single rag-* colour tokens (same source as <RagDot>); only the
@@ -134,7 +119,7 @@ export function StatusPulseDetails({
   }
 
   const statusLabel = STATUS_LABELS[status] ?? status;
-  const StatusIcon = STATUS_ICONS[status] ?? Circle;
+  const StatusIcon = STATUS_ICONS[status] ?? STATUS_ICON_FALLBACK;
   // Health is only meaningful while a project is live (unchanged gating).
   const showHealth = status === "active" || status === "on_hold";
 

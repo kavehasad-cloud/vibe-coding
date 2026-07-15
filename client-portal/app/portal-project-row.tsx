@@ -1,5 +1,15 @@
-import { RagBadge } from "@/app/rag";
-import { STATUS_LABELS, HEALTH_LABELS } from "@/app/status-labels";
+import { RagDot } from "@/app/rag";
+import {
+  STATUS_LABELS,
+  HEALTH_LABELS,
+  STATUS_ICONS,
+  STATUS_ICON_FALLBACK,
+} from "@/app/status-labels";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Read-only project row for the client portal — no link (clients have no
 // scorecard route), no selects, no Edit/Delete. Nothing here mutates. Mirrors
@@ -17,20 +27,47 @@ export function PortalProjectRow({ project }: { project: Project }) {
   const showHealth =
     project.status === "active" || project.status === "on_hold";
 
+  const StatusIcon = STATUS_ICONS[project.status] ?? STATUS_ICON_FALLBACK;
+  const statusLabel = STATUS_LABELS[project.status] ?? project.status;
+  const healthLabel = HEALTH_LABELS[project.health] ?? project.health;
+
   return (
     <li className="flex items-center gap-3 px-4 py-3">
       <span className="min-w-0 flex-1 truncate font-medium">
         {project.name}
       </span>
+      {/* Health as a bigger traffic-light circle; label on hover. role=img +
+          aria-label carry the name (the dot is aria-hidden). Mirrors the risk
+          severity cell. Only shown while the project is live. */}
       {showHealth ? (
-        <RagBadge
-          rag={project.health}
-          label={HEALTH_LABELS[project.health] ?? project.health}
-        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              role="img"
+              aria-label={healthLabel}
+              className="inline-flex"
+            >
+              <RagDot rag={project.health} className="size-2.5" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{healthLabel}</TooltipContent>
+        </Tooltip>
       ) : null}
-      <span className="shrink-0 text-sm text-muted-foreground">
-        {STATUS_LABELS[project.status] ?? project.status}
-      </span>
+      {/* Status as a monochrome glyph; label on hover. role=img + aria-label
+          give it an accessible name since the icon alone says nothing to a
+          reader. Mirrors the dashboard's read-only project rows. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            role="img"
+            aria-label={statusLabel}
+            className="shrink-0 text-graphite"
+          >
+            <StatusIcon aria-hidden className="size-4" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{statusLabel}</TooltipContent>
+      </Tooltip>
     </li>
   );
 }

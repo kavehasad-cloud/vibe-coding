@@ -2,6 +2,16 @@
 // Shared by the portal, project detail, dashboard, and the health <select> so
 // the labels/colors can't silently fork across pages.
 
+import {
+  CircleDashed,
+  Activity,
+  PauseCircle,
+  CheckCircle2,
+  XCircle,
+  Circle,
+  type LucideIcon,
+} from "lucide-react";
+
 // Human-readable label for each project lifecycle status.
 // Keys match the DB CHECK constraint on projects.status.
 export const STATUS_LABELS: Record<string, string> = {
@@ -11,6 +21,21 @@ export const STATUS_LABELS: Record<string, string> = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
+
+// Monochrome status glyphs — colour stays reserved for the RAG health dot
+// (DESIGN §6), so lifecycle is carried by icon shape + neutral ink, never hue.
+// Every projects.status value maps here; unknown values fall back to
+// STATUS_ICON_FALLBACK. Shared by the scorecard header and the dashboard rows.
+export const STATUS_ICONS: Record<string, LucideIcon> = {
+  not_started: CircleDashed,
+  active: Activity,
+  on_hold: PauseCircle,
+  completed: CheckCircle2,
+  cancelled: XCircle,
+};
+
+// Fallback glyph for any unknown status value.
+export const STATUS_ICON_FALLBACK: LucideIcon = Circle;
 
 // Tailwind classes for a project's RAG health badge/control.
 // Keys match the DB CHECK constraint on projects.health.

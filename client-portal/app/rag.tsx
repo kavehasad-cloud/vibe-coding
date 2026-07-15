@@ -15,11 +15,19 @@ const DOT: Record<string, string> = {
 
 // Bare dot — for tight spots (table cells, the Gantt) where the label is
 // redundant or lives elsewhere. Any unknown value falls back to neutral.
-export function RagDot({ rag }: { rag: string }) {
+// `className` overrides the default size (e.g. a bigger circle in the risks
+// table); it defaults to size-1.5 so every existing usage is unchanged.
+export function RagDot({
+  rag,
+  className = "size-1.5",
+}: {
+  rag: string;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden
-      className={`inline-block size-1.5 shrink-0 rounded-full ${DOT[rag] ?? DOT.neutral}`}
+      className={`inline-block shrink-0 rounded-full ${className} ${DOT[rag] ?? DOT.neutral}`}
     />
   );
 }

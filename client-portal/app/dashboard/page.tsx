@@ -1,7 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { STATUS_LABELS } from "@/app/status-labels";
+import {
+  STATUS_LABELS,
+  STATUS_ICONS,
+  STATUS_ICON_FALLBACK,
+} from "@/app/status-labels";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { parseDate, todayMidnight, localDateStr } from "@/app/format";
 import { NewClientForm } from "@/app/new-client-form";
 import { ClientBoxControls } from "@/app/client-box-controls";
@@ -429,28 +438,45 @@ export default async function DashboardPage() {
                     </p>
                   ) : (
                     <ul className="mt-3 divide-y rounded-lg border">
-                      {box.listed.map((p) => (
-                        <li
-                          key={p.id}
-                          className="flex items-center gap-3 px-4 py-3"
-                        >
-                          <span
-                            aria-hidden
-                            className={`size-2 shrink-0 rounded-full ${
-                              HEALTH_DOT[p.health] ?? "bg-rag-neutral"
-                            }`}
-                          />
-                          <Link
-                            href={`/clients/${box.clientId}/projects/${p.id}`}
-                            className="min-w-0 flex-1 truncate font-medium hover:underline"
+                      {box.listed.map((p) => {
+                        const StatusIcon =
+                          STATUS_ICONS[p.status] ?? STATUS_ICON_FALLBACK;
+                        const statusLabel = STATUS_LABELS[p.status] ?? p.status;
+                        return (
+                          <li
+                            key={p.id}
+                            className="flex items-center gap-3 px-4 py-3"
                           >
-                            {p.name}
-                          </Link>
-                          <span className="shrink-0 text-sm text-muted-foreground">
-                            {STATUS_LABELS[p.status] ?? p.status}
-                          </span>
-                        </li>
-                      ))}
+                            <span
+                              aria-hidden
+                              className={`size-2 shrink-0 rounded-full ${
+                                HEALTH_DOT[p.health] ?? "bg-rag-neutral"
+                              }`}
+                            />
+                            <Link
+                              href={`/clients/${box.clientId}/projects/${p.id}`}
+                              className="min-w-0 flex-1 truncate font-medium hover:underline"
+                            >
+                              {p.name}
+                            </Link>
+                            {/* Status as a monochrome glyph; label on hover.
+                                role=img + aria-label give it an accessible name
+                                since the icon alone says nothing to a reader. */}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span
+                                  role="img"
+                                  aria-label={statusLabel}
+                                  className="shrink-0 text-graphite"
+                                >
+                                  <StatusIcon aria-hidden className="size-4" />
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{statusLabel}</TooltipContent>
+                            </Tooltip>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </CardContent>

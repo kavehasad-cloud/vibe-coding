@@ -8,9 +8,14 @@ import {
 } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RagBadge } from "./rag";
+import { RagDot } from "./rag";
 import { LevelSelect, SEVERITY_LABEL } from "./risk-fields";
 import { riskRag } from "./risk-rag";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Risk = {
   id: string;
@@ -103,7 +108,20 @@ export function RiskRow({
     <tr className="group/row align-top">
       <td className="px-4 py-3 font-medium text-ink">{risk.description}</td>
       <td className="px-4 py-3">
-        <RagBadge rag={rag} label={SEVERITY_LABEL[rag] ?? rag} />
+        {/* Severity as a bigger traffic-light circle; label on hover.
+            role=img + aria-label carry the name (the dot is aria-hidden). */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              role="img"
+              aria-label={SEVERITY_LABEL[rag] ?? rag}
+              className="inline-flex"
+            >
+              <RagDot rag={rag} className="size-2.5" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>{SEVERITY_LABEL[rag] ?? rag}</TooltipContent>
+        </Tooltip>
       </td>
       <td className="px-4 py-3 text-graphite">
         {risk.mitigation ? risk.mitigation : "—"}
