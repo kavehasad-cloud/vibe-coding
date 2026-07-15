@@ -380,29 +380,34 @@ export default async function DashboardPage() {
         <p className="mt-6 text-sm text-muted-foreground">No clients yet</p>
       ) : (
         <>
-          {/* Global summary strip: at-a-glance counts across all projects */}
-          <div className="mt-6">
-            <StatusStrip projects={projects} />
-          </div>
-
-          {/* Portfolio current-month FTE total across all clients */}
-          <div className="mt-1">
-            <FteLine
-              label="This month across all clients:"
-              planned={portfolioFte.planned}
-              actual={portfolioFte.actual}
-            />
-          </div>
+          {/* Portfolio overview — its own Paper panel on the tinted canvas so
+              the "is everything OK?" summary reads as a distinct surface (§4.7/§4.8). */}
+          <Card className={`mt-6 ${PANEL}`}>
+            <CardHeader className={PANEL_HEADER}>
+              <CardTitle className={PANEL_TITLE}>Portfolio</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <StatusStrip projects={projects} />
+              <FteLine
+                label="This month across all clients:"
+                planned={portfolioFte.planned}
+                actual={portfolioFte.actual}
+              />
+            </CardContent>
+          </Card>
 
           {/* One card per client, tiled in a balanced grid (§4.5) */}
           <div className="mt-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
             {clientBoxes.map((box) => (
               <Card key={box.clientId} className={PANEL}>
                 <CardHeader className={PANEL_HEADER}>
-                  <CardTitle className={PANEL_TITLE}>
+                  {/* Entity name (§4.7/§3): the client itself — larger, mixed-case,
+                      Ink, SemiBold. Deliberately NOT the tracked-caps eyebrow used
+                      for section labels, so a name never reads as a heading. */}
+                  <CardTitle className="text-[1.125rem] leading-tight font-semibold tracking-tight text-ink">
                     <Link
                       href={`/clients/${box.clientId}`}
-                      className="hover:underline"
+                      className="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
                     >
                       {box.name}
                     </Link>
@@ -431,49 +436,54 @@ export default async function DashboardPage() {
                     />
                   </div>
 
-                  {/* Relevant projects */}
+                  {/* Section label (§4.7) — a tracked-caps eyebrow, clearly a
+                      LABEL, distinct from the client entity name in the header. */}
+                  <p className={`mt-4 mb-2 ${PANEL_TITLE}`}>Projects</p>
                   {box.listed.length === 0 ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
+                    <p className="text-sm text-graphite">
                       No active projects in the next 2 months
                     </p>
                   ) : (
-                    <ul className="mt-3 divide-y rounded-lg border">
+                    <ul className="divide-y overflow-hidden rounded-lg border">
                       {box.listed.map((p) => {
                         const StatusIcon =
                           STATUS_ICONS[p.status] ?? STATUS_ICON_FALLBACK;
                         const statusLabel = STATUS_LABELS[p.status] ?? p.status;
                         return (
-                          <li
-                            key={p.id}
-                            className="flex items-center gap-3 px-4 py-3"
-                          >
-                            <span
-                              aria-hidden
-                              className={`size-2 shrink-0 rounded-full ${
-                                HEALTH_DOT[p.health] ?? "bg-rag-neutral"
-                              }`}
-                            />
+                          <li key={p.id}>
+                            {/* The whole row is the click target (→ scorecard).
+                                Affordance (§5): pointer cursor + Ocean-tint hover
+                                fill make the interactivity legible without hover-
+                                hunting. */}
                             <Link
                               href={`/clients/${box.clientId}/projects/${p.id}`}
-                              className="min-w-0 flex-1 truncate font-medium hover:underline"
+                              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-ocean-tint focus-visible:bg-ocean-tint focus-visible:outline-none"
                             >
-                              {p.name}
+                              <span
+                                aria-hidden
+                                className={`size-2 shrink-0 rounded-full ${
+                                  HEALTH_DOT[p.health] ?? "bg-rag-neutral"
+                                }`}
+                              />
+                              <span className="min-w-0 flex-1 truncate font-medium text-ink">
+                                {p.name}
+                              </span>
+                              {/* Status as a monochrome glyph; label on hover.
+                                  role=img + aria-label give it an accessible name
+                                  since the icon alone says nothing to a reader. */}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    role="img"
+                                    aria-label={statusLabel}
+                                    className="shrink-0 text-graphite"
+                                  >
+                                    <StatusIcon aria-hidden className="size-4" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>{statusLabel}</TooltipContent>
+                              </Tooltip>
                             </Link>
-                            {/* Status as a monochrome glyph; label on hover.
-                                role=img + aria-label give it an accessible name
-                                since the icon alone says nothing to a reader. */}
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span
-                                  role="img"
-                                  aria-label={statusLabel}
-                                  className="shrink-0 text-graphite"
-                                >
-                                  <StatusIcon aria-hidden className="size-4" />
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>{statusLabel}</TooltipContent>
-                            </Tooltip>
                           </li>
                         );
                       })}

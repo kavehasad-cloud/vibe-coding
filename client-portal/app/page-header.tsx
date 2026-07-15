@@ -34,7 +34,7 @@ export function PageHeader({
           backHref ? "mt-4" : ""
         }`}
       >
-        <h1 className="text-xl font-semibold tracking-tight text-ink">
+        <h1 className="text-[1.375rem] leading-tight font-semibold tracking-tight text-ink">
           {title}
         </h1>
         {rightSlot ?? null}

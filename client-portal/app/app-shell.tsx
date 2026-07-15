@@ -15,9 +15,15 @@ export function AppShell({
   return (
     <TooltipProvider>
       <NavBar />
-      <main className={`mx-auto w-full flex-1 ${maxWidth} px-6 py-10`}>
-        {children}
-      </main>
+      {/* Tinted app canvas (§4.8 figure/ground): a full-bleed Mist surface so
+          the Paper cards inside read as figures ON a ground, not white-on-white.
+          Neutral Mist here keeps Ocean-tint reserved for structural/interactive
+          fills (header bands, row hover). Nav + footer are chrome, left on Paper. */}
+      <div className="flex-1 bg-mist">
+        <main className={`mx-auto w-full ${maxWidth} px-6 py-10`}>
+          {children}
+        </main>
+      </div>
       <Footer />
     </TooltipProvider>
   );
