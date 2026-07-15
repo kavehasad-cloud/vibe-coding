@@ -104,7 +104,11 @@ export default async function PortalPage() {
           ) : (
             <ul className="divide-y rounded-lg border">
               {projectList.map((project) => (
-                <PortalProjectRow key={project.id} project={project} />
+                <PortalProjectRow
+                  key={project.id}
+                  project={project}
+                  clientId={profile.client_id}
+                />
               ))}
             </ul>
           )}

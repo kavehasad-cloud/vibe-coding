@@ -37,7 +37,7 @@ export default async function ProjectDetailPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, client_id")
     .eq("id", user.id)
     .single();
 
@@ -56,6 +56,14 @@ export default async function ProjectDetailPage({
   // Prevent cross-client access: the project must belong to the client in the
   // URL. 404 (not 403) so we don't reveal that the project exists elsewhere.
   if (project.client_id !== id) {
+    notFound();
+  }
+
+  // Defense-in-depth behind RLS: a non-admin (client viewer) may only open a
+  // scorecard under THEIR OWN client. RLS already scopes their reads, but this
+  // makes the boundary explicit rather than relying on RLS alone. Admins are
+  // scoped by the project.client_id === id guard above instead.
+  if (!isAdmin && profile?.client_id !== id) {
     notFound();
   }
 

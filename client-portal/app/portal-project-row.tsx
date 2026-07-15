@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { RagDot } from "@/app/rag";
 import {
   STATUS_LABELS,
@@ -11,8 +12,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Read-only project row for the client portal — no link (clients have no
-// scorecard route), no selects, no Edit/Delete. Nothing here mutates. Mirrors
+// Read-only project row for the client portal — the name links to the (read-
+// only) scorecard; no selects, no Edit/Delete. Nothing here mutates. Mirrors
 // the dashboard's project-row look and the scorecard's health gating.
 type Project = {
   id: string;
@@ -21,7 +22,13 @@ type Project = {
   health: string;
 };
 
-export function PortalProjectRow({ project }: { project: Project }) {
+export function PortalProjectRow({
+  project,
+  clientId,
+}: {
+  project: Project;
+  clientId: string;
+}) {
   // Health is only meaningful while a project is live (same gating as the
   // scorecard's showHealth and the admin ProjectRow).
   const showHealth =
@@ -32,10 +39,15 @@ export function PortalProjectRow({ project }: { project: Project }) {
   const healthLabel = HEALTH_LABELS[project.health] ?? project.health;
 
   return (
-    <li className="flex items-center gap-3 px-4 py-3">
-      <span className="min-w-0 flex-1 truncate font-medium">
+    <li className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-ocean-tint">
+      {/* Name links to the read-only scorecard. Not a whole-row link (keeps the
+          quiet read-only register); the row hover-tint is the §5 affordance. */}
+      <Link
+        href={`/clients/${clientId}/projects/${project.id}`}
+        className="min-w-0 flex-1 truncate font-medium text-ink hover:underline"
+      >
         {project.name}
-      </span>
+      </Link>
       {/* Health as a bigger traffic-light circle; label on hover. role=img +
           aria-label carry the name (the dot is aria-hidden). Mirrors the risk
           severity cell. Only shown while the project is live. */}
