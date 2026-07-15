@@ -1,6 +1,6 @@
 # Client Portal — Data Model
 
-*Last updated: 2026-07-14 · Status: reflects live schema through Day 26.*
+*Last updated: 2026-07-15 · Status: reflects live schema through Day 27.*
 
 The blueprint of what the app actually stores and how it connects.
 *(GitHub renders the diagram below automatically.)*
@@ -43,6 +43,9 @@ erDiagram
     text summary
     text asks
     text issues
+    text code
+    text pm
+    text sponsor
     timestamptz created_at
   }
   MILESTONES {
@@ -126,6 +129,9 @@ Resourcing **and** pricing now live in the `allocations` table as monthly FTE �
   default `not_started`.
 - `health` — `CHECK in ('green','amber','red')`, default `green`.
 - `summary`, `asks`, `issues` — nullable free text (Block 2, Executive Summary).
+- `code`, `pm`, `sponsor` — nullable free text (Block 1, Status & Pulse: project code,
+  project manager, client sponsor). No CHECK constraint. **No `trend` column** —
+  deliberately dropped, see the 2026-07-14 ADR.
 - **RLS:** 4 per-user policies (`auth.uid() = owner_id`), **plus** an additive
   client-viewer SELECT:
   `client_id = (select client_id from profiles where id = auth.uid())`.

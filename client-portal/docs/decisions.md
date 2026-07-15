@@ -4,9 +4,30 @@ A running log of significant product & architecture decisions and WHY we made th
 
 Visual/design decisions: see `DESIGN.md` at repo root — the binding design spec (wired via `CLAUDE.md`). ADRs here record design *decisions* + rationale and point to it rather than duplicating it.
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 ---
+
+## 2026-07-14 — Status & Pulse: add code/pm/sponsor columns; drop Trend; restructure the scorecard top
+**Decision:** (a) Added `code`, `pm`, `sponsor` as nullable text columns on `projects`, run
+directly in Supabase per the existing convention — no migration files; documented here and in
+`data-model.md`. (b) These were previously hardcoded `—` placeholders in the JSX with no backing
+columns and no edit path — display-only scaffolding; they are now editable via a new
+`updateProjectDetailsAction` + `StatusPulseDetails`, mirroring the existing
+`updateProjectSummaryAction` / exec-summary pattern. (c) **Dropped "Trend"** — the design spec only
+ever said "trend arrow" with no defined values or data source, so it is deferred until defined
+rather than shipped as a dead field. (d) Restructured the scorecard top from a 2-column
+[Status & Pulse | Executive Summary] grid into stacked full-width bands: a title-less identity
+header (name + code, Edit, status icon + health RAG circle) with PM/Sponsor below, then Executive
+Summary full-width; Timeline and everything below unchanged (reused the existing `lg:col-span-2`
+pattern).
+**Why:** Nullable text needs no backfill and can't break existing rows or queries — the safest
+possible schema change. Mirroring the existing `summary`/`asks`/`issues` pattern keeps one way of
+doing project-text edits. Shipping a "Trend" with no definition would be inventing a signal, not
+recording one. The stacked header reads as a real scorecard identity band rather than a cramped
+half-width card.
+**Status:** Done. Columns live in Supabase (verified via `information_schema`); code committed
+`a3a9cca`.
 
 ## 2026-07-13 — Tame RAG to the muted `rag-*` register; "colour on a dot, never a fill" as core visual law
 **Decision:** Retuned the RAG status colours to a muted `rag-*` token register and codified the governing rule: **colour appears on a small dot or thin accent, never as a background fill or tinted text.** Health is now rendered as a `rag-dot` + Ink label (not a coloured pill or coloured text), and the native health `<select>` was replaced with the shadcn `Select`.
