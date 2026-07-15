@@ -202,30 +202,35 @@ Every panel/card in the app follows ONE structure so the whole app reads as one 
 
 ## 4.8 Surface hierarchy & scannability (figure/ground)
 
-Light-dominant does NOT mean white-on-white. The palette already designates the tint tokens for
-exactly this job (§2) — they were specified and never deployed, which is what made the app flat and
-hard to scan. These laws make the spec deploy its own palette. Nothing here loosens the brand: no
+Light-dominant does NOT mean white-on-white. The flat, hard-to-scan pages came from one thing:
+Paper cards on a Paper page, with no figure/ground. The fix is a single move at the PAGE level —
+tint the canvas, keep the cards Paper. That is the whole law. Nothing here loosens the brand: no
 shadows, no gradients, light still dominates, one accent (Deep ocean), no new hues.
 
-- **Figure/ground is mandatory.** The app canvas takes a subtle tint (Mist `#e7e7e8` or Ocean-tint
-  `#e9edf2` at low strength); Cards/panels are Paper (`#ffffff`) sitting ON that canvas. Surfaces
-  separate by the Paper-on-tint contrast plus the hairline Platinum border — this REPLACES today's
-  white-card-on-white-page, which has no figure/ground and reads as one flat sheet.
-- **Header bands may take an Ocean-tint fill.** Table header rows and section header bands may fill
-  Ocean-tint (`#e9edf2`) — the token's own documented role ("section backgrounds", §2). This is the
-  sanctioned, expected way to make headers scannable: a header row must be distinguishable from the
-  body rows beneath it at a glance.
-- **Row hover / zebra.** Rows may take an Ocean-tint hover fill, and a dense table may use a very
-  subtle Mist zebra (per §5). Keep it subtle — the tint separates, it does not shout.
-- **Reconciling with §4 ("Outline for structure, fill for emphasis"):** that law is intact. Subtle
-  NEUTRAL/TINT fills for surface and header hierarchy (Mist, Ocean-tint) are permitted and expected;
-  "fill for emphasis" refers specifically to the rare Deep-ocean-FILLED element (the one important
-  cell, the primary action), NOT to a ban on tinted surfaces. Tinted structure ≠ Deep-ocean emphasis.
-- **Reconciling with §1.5 ("generous space over decoration"):** a tint band is STRUCTURE, not
-  decoration. It earns its place by replacing lines/boxes — a tinted header band means you don't add
-  an extra rule or border to separate the header. If a tint isn't doing structural work, don't add it.
-- **Restraint still governs.** ONE canvas tint, held everywhere. Tints stay low-strength so the world
-  stays bright and light-dominant. When in doubt, choose the quieter step (§0).
+> **Learned the hard way.** An earlier version of this section also permitted Ocean-tint fills on
+> table headers and section bands INSIDE cards. It was built, looked at, and rejected on sight — it
+> made every card busy and cluttered, reading as decoration, not structure. That permission is now a
+> prohibition (below). Figure/ground lives at the page level only; inside a card, restraint rules.
+
+- **Figure/ground is mandatory — and it is a PAGE-LEVEL move only.** The app canvas takes a subtle
+  **Mist** (`#e7e7e8`) tint; Cards/panels are Paper (`#ffffff`) sitting ON that canvas. Surfaces
+  separate by the Paper-on-Mist contrast plus the hairline Platinum border — this REPLACES the old
+  white-card-on-white-page, which had no figure/ground and read as one flat sheet. This single change
+  fixed the flatness; it is the real win of this section.
+- **Do NOT tint inside cards.** No fill on table header rows, no banded section headers, no tinted
+  sub-tables or nested lists — nothing static inside a Card gets a background fill. Inside a card,
+  hierarchy comes ONLY from the type scale (§3), hairline Platinum dividers, and space. A tint inside
+  a card reads as decoration, not structure, and violates §1.5. This was tried and rejected in
+  practice — treat it as settled, not open.
+- **Ocean-tint is for INTERACTIVE state, never static structure.** The one sanctioned use of
+  Ocean-tint (`#e9edf2`) as a fill is a **row hover** or a **selected row** — the affordance signal
+  from §5. That is a transient interaction cue, not a structural band. Keep it subtle. (A dense table
+  may still use a very faint Mist zebra per §5, but reach for space and dividers first.)
+- **Reconciling with §4 ("Outline for structure, fill for emphasis"):** intact and reinforced.
+  Structure is carried by outline (hairline borders) and space — NOT by tinted fills. The only fills
+  are the rare Deep-ocean-FILLED emphasis element (§4) and the Ocean-tint interactive state above.
+- **Restraint governs.** ONE canvas tint (Mist), held everywhere; Paper cards on top; no tint within.
+  When in doubt, choose the quieter step (§0).
 
 ---
 

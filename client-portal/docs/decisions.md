@@ -8,6 +8,25 @@ Last updated: 2026-07-15
 
 ---
 
+## 2026-07-15 — Client logins can open their own projects' scorecards (read-only)
+**Decision:** Client (non-admin) logins can now open the project scorecard read-only — project names
+on `/portal` link to `/clients/[clientId]/projects/[projectId]`. Recon established this was a **UI
+change, not an authorization change**: the scorecard NEVER had a role gate (only
+`if (!user) redirect("/login")`), so it was already viewable read-only by any logged-in user — clients
+simply had no link to reach it. All admin controls were already correctly gated (5 display components
+honor `readOnly`; the 3 entry forms — add milestone / add month / add risk — are `isAdmin`-conditional),
+and every write action re-checks `requireAdmin()` server-side. As **defense-in-depth**, the page now
+fetches `profiles.client_id` alongside `role` and, for non-admins, `notFound()`s unless
+`profile.client_id === ` the URL's client id — making the cross-client boundary explicit instead of
+resting on RLS alone. Admins remain scoped by the existing `project.client_id === id` URL-consistency
+guard.
+**Why:** Clients could see their projects listed but couldn't open any of them — the read-only scorecard
+is exactly the detail they should have. RLS already scoped every read correctly, but resting cross-client
+protection *solely* on RLS ran against this project's standing defense-in-depth habit (the same principle
+as the 2026-06-30 `requireAdmin()` ADR): the app should enforce the boundary itself, not assume the
+database will.
+**Status:** Done, live.
+
 ## 2026-07-14 — Status & Pulse: add code/pm/sponsor columns; drop Trend; restructure the scorecard top
 **Decision:** (a) Added `code`, `pm`, `sponsor` as nullable text columns on `projects`, run
 directly in Supabase per the existing convention — no migration files; documented here and in
