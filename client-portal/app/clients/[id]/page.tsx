@@ -95,7 +95,7 @@ export default async function ClientDetailPage({
           </CardHeader>
           <CardContent>
             {projectList.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No projects yet</p>
+              <p className="text-sm text-graphite">No projects yet</p>
             ) : (
               <FteRoadmap
                 clientId={id}
@@ -115,7 +115,7 @@ export default async function ClientDetailPage({
           </CardHeader>
           <CardContent>
             {!projects || projects.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No projects yet</p>
+              <p className="text-sm text-graphite">No projects yet</p>
             ) : (
               <ul className="divide-y rounded-lg border">
                 {projects.map((project) => (

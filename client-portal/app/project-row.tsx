@@ -78,10 +78,10 @@ export function ProjectRow({
   }
 
   return (
-    <li className="flex items-center justify-between gap-3 px-4 py-3">
+    <li className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-ocean-tint">
       <Link
         href={`/clients/${clientId}/projects/${project.id}`}
-        className="min-w-0 truncate font-medium hover:underline"
+        className="min-w-0 truncate font-medium text-ink hover:underline"
       >
         {project.name}
       </Link>
