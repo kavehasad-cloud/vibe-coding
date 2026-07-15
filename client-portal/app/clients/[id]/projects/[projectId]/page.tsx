@@ -59,6 +59,17 @@ export default async function ProjectDetailPage({
     notFound();
   }
 
+  // The parent client — so the scorecard NAMES whose project this is (an admin
+  // juggling clients otherwise can't tell). Same fetch pattern as the client
+  // page; RLS lets both admin (owner) and the client-viewer read this row.
+  const { data: client } = await supabase
+    .from("clients")
+    .select("name")
+    .eq("id", id)
+    .single();
+
+  const clientName = client?.name ?? null;
+
   const { data: milestones } = await supabase
     .from("milestones")
     .select("id, name, start_date, due_date, is_done")
@@ -90,7 +101,7 @@ export default async function ProjectDetailPage({
         href={`/clients/${id}`}
         className="inline-flex items-center gap-1.5 text-sm text-graphite transition-colors hover:text-ink"
       >
-        <span aria-hidden>←</span> Back to client
+        <span aria-hidden>←</span> Back to {clientName ?? "client"}
       </Link>
 
       <div className="mt-6 grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
@@ -100,6 +111,7 @@ export default async function ProjectDetailPage({
             <StatusPulseDetails
               projectId={projectId}
               projectPath={projectPath}
+              clientName={clientName}
               name={project.name}
               status={project.status}
               health={project.health}

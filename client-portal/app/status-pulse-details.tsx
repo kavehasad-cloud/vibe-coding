@@ -40,6 +40,7 @@ function DetailCell({ label, value }: { label: string; value: string | null }) {
 export function StatusPulseDetails({
   projectId,
   projectPath,
+  clientName,
   name,
   status,
   health,
@@ -50,6 +51,7 @@ export function StatusPulseDetails({
 }: {
   projectId: string;
   projectPath: string;
+  clientName: string | null;
   name: string;
   status: string;
   health: string;
@@ -128,21 +130,30 @@ export function StatusPulseDetails({
       {/* Row 1 — identity (name + code) on the left, the status/health signal
           as two icon-above-label units on the right. */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl leading-tight font-semibold tracking-tight text-ink">
-            {name}
-            {code ? ` (${code})` : ""}
-          </h1>
-          {!readOnly ? (
-            <Button
-              size="sm"
-              variant="outline"
-              type="button"
-              onClick={() => setEditing(true)}
-            >
-              Edit
-            </Button>
+        <div>
+          {/* Parent (§3 hierarchy): the client this project belongs to. A quiet
+              graphite line above the project name — normal-case (NOT the tracked-
+              caps section eyebrow, per §4.7) and clearly subordinate to the h1,
+              so it names the owner without competing with the project title. */}
+          {clientName ? (
+            <p className="text-[13px] font-medium text-graphite">{clientName}</p>
           ) : null}
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl leading-tight font-semibold tracking-tight text-ink">
+              {name}
+              {code ? ` (${code})` : ""}
+            </h1>
+            {!readOnly ? (
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() => setEditing(true)}
+              >
+                Edit
+              </Button>
+            ) : null}
+          </div>
         </div>
         <div className="flex items-center gap-8">
           {/* Status unit — larger neutral glyph over a tracked micro-caps label.

@@ -70,7 +70,11 @@ function EditableCell({
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="rounded-md border border-transparent px-2 py-1 text-sm tabular-nums text-ink transition-colors hover:border-platinum hover:bg-ocean-tint/40"
+        // At-rest cue (§5): a dashed Platinum underline marks the cell as
+        // editable BEFORE hover, so an admin can see which numbers are editable
+        // without hovering — the read-only spans and the derived Variance row
+        // stay plain. Hover then layers the stronger box + Ocean-tint on top.
+        className="rounded-md border border-transparent px-2 py-1 text-sm tabular-nums text-ink underline decoration-dashed decoration-platinum underline-offset-4 transition-colors hover:border-platinum hover:bg-ocean-tint/40 hover:no-underline"
       >
         {fmt(value)}
       </button>
