@@ -92,16 +92,28 @@ Manrope SemiBold — matches the brand doc's "OUR VALUES" / "STAT TILES" style.
 Current headings are TOO BIG. Come down to a tight, professional scale (Linear/Notion register).
 These are targets, not marketing sizes — err smaller, never larger:
 
-| Role | Size | Weight |
-|---|---|---|
-| Page title (e.g. "Dashboard") | ~20-24px | SemiBold 600 |
-| Panel / section heading | ~14-16px | SemiBold 600 |
-| Subhead | ~13-14px | Medium 500 |
-| Body / table text | ~13-14px | Regular 400 |
-| Small / meta / eyebrow | ~11-12px | Medium/SemiBold |
+| Role | Size | Weight | Colour |
+|---|---|---|---|
+| Page title (e.g. "Dashboard") | ~22px | SemiBold 600 | Ink |
+| Entity name (a client, a project — the thing itself) | ~18px | SemiBold 600 | Ink |
+| Subhead / secondary heading | ~14px | Medium 500 | Graphite |
+| Panel section label (the tracked-caps eyebrow) | ~11–12px, UPPERCASE, tracked | SemiBold 600 | Graphite |
+| Table column header | ~12px, normal case | Medium 500 | Graphite |
+| Body & table text | ~14px | Regular 400 | Ink (Graphite for secondary/muted body) |
+| Small meta (timestamps, counts, captions) | ~11px | Medium 500 | Slate |
 
-- **Never** use a giant display heading. A page title is a modest label, not a hero.
-- Hierarchy comes from **weight and colour** (SemiBold Ink vs Regular Graphite), not from big sizes.
+- **Never** use a giant display heading. A page title is a modest label, not a hero — this stays a
+  dense tool, not a marketing page.
+- Hierarchy comes from **weight, colour, AND a disciplined size scale.** Each level must be visibly
+  distinct from the one above and below — if two different kinds of thing render at the same size and
+  weight, the hierarchy has failed.
+- **Use the neutral ramp systematically:** Ink = primary (page titles, entity names, body text),
+  Graphite = secondary (subheads, section labels, column headers, muted body), Slate = meta/muted.
+  Per §2's contrast rule, Slate is for *larger or non-essential* meta only — never small running body
+  text; where a small meta value must be read reliably, use Graphite instead.
+- The steps are real but tight — ~22 → ~18 → ~14 → ~12 → ~11 — and no level collides with its
+  neighbour in BOTH size and weight (e.g. the 12px section label is SemiBold UPPERCASE tracked, while
+  the 12px column header is Medium normal-case: same size, deliberately different weight and case).
 - Tighten line-height on headings; keep body comfortable.
 
 ---
@@ -173,10 +185,47 @@ Every panel/card in the app follows ONE structure so the whole app reads as one 
   - Examples: "EXECUTIVE SUMMARY", "TIMELINE & VELOCITY", "RESOURCE PLAN", "RISKS & DEPENDENCIES".
   - NEVER a large, mixed-case, Ink panel heading. Titles are quiet tracked-caps labels, clearly
     distinct from body text (which is Ink, normal case).
+- **Entity names are NOT section labels — give them the entity treatment, not the eyebrow.** A
+  section label ("PROJECTS", "EXECUTIVE SUMMARY", "TIMELINE & VELOCITY") names a *kind of panel* and
+  KEEPS the identical tracked-caps Graphite eyebrow, zero variation — the rule directly above stands.
+  An **entity name** — a specific client, a specific project — is not a label for a section; it is the
+  thing itself, and takes the Entity-name treatment from the §3 scale: larger, **mixed-case, Ink**,
+  SemiBold. The "NEVER a large mixed-case Ink heading" ban above applies to PANEL TITLES only — it
+  never applies to entity names. Today "NIKI INC" (an entity) renders identically to "PROJECTS" (a
+  label); that collision is the bug this fixes — the reader cannot tell a name from a section heading.
 - **Every distinct section gets its own panel** — including admin ENTRY FORMS (Add milestone, Add
   month, Add risk). A form is not left floating loose next to display panels; it sits in its own
   Card, same grid-motif, so admin and client both see a clean boxed layout.
 - Panels in a grid row share equal height and align cleanly (per §4.5).
+
+---
+
+## 4.8 Surface hierarchy & scannability (figure/ground)
+
+Light-dominant does NOT mean white-on-white. The palette already designates the tint tokens for
+exactly this job (§2) — they were specified and never deployed, which is what made the app flat and
+hard to scan. These laws make the spec deploy its own palette. Nothing here loosens the brand: no
+shadows, no gradients, light still dominates, one accent (Deep ocean), no new hues.
+
+- **Figure/ground is mandatory.** The app canvas takes a subtle tint (Mist `#e7e7e8` or Ocean-tint
+  `#e9edf2` at low strength); Cards/panels are Paper (`#ffffff`) sitting ON that canvas. Surfaces
+  separate by the Paper-on-tint contrast plus the hairline Platinum border — this REPLACES today's
+  white-card-on-white-page, which has no figure/ground and reads as one flat sheet.
+- **Header bands may take an Ocean-tint fill.** Table header rows and section header bands may fill
+  Ocean-tint (`#e9edf2`) — the token's own documented role ("section backgrounds", §2). This is the
+  sanctioned, expected way to make headers scannable: a header row must be distinguishable from the
+  body rows beneath it at a glance.
+- **Row hover / zebra.** Rows may take an Ocean-tint hover fill, and a dense table may use a very
+  subtle Mist zebra (per §5). Keep it subtle — the tint separates, it does not shout.
+- **Reconciling with §4 ("Outline for structure, fill for emphasis"):** that law is intact. Subtle
+  NEUTRAL/TINT fills for surface and header hierarchy (Mist, Ocean-tint) are permitted and expected;
+  "fill for emphasis" refers specifically to the rare Deep-ocean-FILLED element (the one important
+  cell, the primary action), NOT to a ban on tinted surfaces. Tinted structure ≠ Deep-ocean emphasis.
+- **Reconciling with §1.5 ("generous space over decoration"):** a tint band is STRUCTURE, not
+  decoration. It earns its place by replacing lines/boxes — a tinted header band means you don't add
+  an extra rule or border to separate the header. If a tint isn't doing structural work, don't add it.
+- **Restraint still governs.** ONE canvas tint, held everywhere. Tints stay low-strength so the world
+  stays bright and light-dominant. When in doubt, choose the quieter step (§0).
 
 ---
 
@@ -192,6 +241,24 @@ Every panel/card in the app follows ONE structure so the whole app reads as one 
 - **Inputs:** Paper fill, Platinum border, Ink text; focus ring in Deep ocean.
 - **Empty/loading/disabled states:** always designed, always calm. Muted Graphite text, never
   a jarring placeholder.
+
+### Interactive affordance — it must look interactive without discovery
+
+Anything interactive must LOOK interactive without requiring discovery. The reader should never have
+to hover blindly to find out where the interactions are.
+
+- **Clickable / editable cells and rows** get a pointer cursor (`cursor-pointer`) AND an Ocean-tint
+  hover fill (per §4.8). An editable value shows a subtle hover affordance — a tint fill, or a quiet
+  Platinum outline appearing on hover — that says "you can change me."
+- **If a user has to guess, or hover blindly to find an interaction, the affordance has failed.** A
+  primitive that does something on click must signal that it is clickable BEFORE the click.
+- **Reconciling with "row actions reveal on hover" (§5):** hover-reveal is fine for SECONDARY actions
+  (Edit / Delete) on a row that is ITSELF already obviously interactive. It is NOT acceptable as the
+  ONLY signal that a primitive — an editable grid cell, an inline-editable value — is interactive at
+  all. The primary "this is interactive" cue must be present without hover; hover-reveal only layers
+  secondary actions on top of an already-legible affordance.
+- **Stay calm.** Affordances use the sanctioned quiet vocabulary — Ocean-tint fill, Platinum outline,
+  pointer cursor, focus ring in Deep ocean. No new colours, no shadows, no loud hover states.
 
 ---
 
