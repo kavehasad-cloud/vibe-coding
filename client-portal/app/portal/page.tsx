@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/app/app-shell";
 import { FteRoadmap } from "@/app/fte-roadmap";
+import { PortalProjectRow } from "@/app/portal-project-row";
 import {
   Card,
   CardContent,
@@ -89,6 +90,23 @@ export default async function PortalPage() {
               milestones={milestones}
               allocations={allocations}
             />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className={`mt-4 ${PANEL}`}>
+        <CardHeader className={PANEL_HEADER}>
+          <CardTitle className={PANEL_TITLE}>Projects</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {projectList.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No projects yet</p>
+          ) : (
+            <ul className="divide-y rounded-lg border">
+              {projectList.map((project) => (
+                <PortalProjectRow key={project.id} project={project} />
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
